@@ -17,6 +17,7 @@
     "idf.flashType": "UART",
     "files.associations": {
         "new": "cpp",
-        "*.tcc": "cpp"
+        "*.tcc": "cpp",
+        "system_error": "cpp"
     }
 }

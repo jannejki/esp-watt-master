@@ -1,5 +1,8 @@
 #include "tasks/debugTask.h"
+
 #include "main.h"
+
+void debug(DebugMessage* debugMessage);
 
 void debugTask(void* params) {
     Serial.begin(115200);
@@ -17,7 +20,7 @@ void debugTask(void* params) {
                 Serial.print('\n');
                 commandInterface.commandEntered((char*)message.c_str());
                 message = "";
-            } else if(c == 127){
+            } else if (c == 127) {
                 message.remove(message.length() - 1);
             } else {
                 message += c;
@@ -25,10 +28,16 @@ void debugTask(void* params) {
         }
 
         if (xQueueReceive(debugQueue, &debugMessage, 0) == pdTRUE) {
-            Serial.print(debugMessage.message);
-            Serial.print(" ");
-            Serial.println(debugMessage.tick);
+            debug(&debugMessage);
         }
         vTaskDelay(20);
     }
+}
+
+void debug(DebugMessage* debugMessage) {
+#ifdef LOG
+    char* message = (char*)debugMessage->message.c_str();
+    char *sender = (char*)debugMessage->sender.c_str();
+    ESP_LOGI(sender, "%s", message);
+#endif
 }

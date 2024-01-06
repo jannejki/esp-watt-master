@@ -3,7 +3,6 @@
 
 #include <map>
 #include <vector>
-
 #include "../main.h"
 
 class CommandInterface {

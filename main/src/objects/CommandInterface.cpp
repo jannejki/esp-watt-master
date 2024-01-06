@@ -1,7 +1,5 @@
 #include "objects/CommandInterface.h"
 
-#include "esp_log.h"
-
 CommandInterface::CommandInterface(uint8_t _ledPin) : ledPin(_ledPin) {
     populateCommandMap();
     pinMode(ledPin, OUTPUT);
@@ -18,7 +16,10 @@ void CommandInterface::ledHandler(String input) {
         } else if (tokens[1] == "off") {
             digitalWrite(ledPin, LOW);
         } else {
-            Serial.println("Wrong parameter! 'help led' to get instructions. Inserted parameter: '" + tokens[1] + "'.");
+            Serial.println(
+                "Wrong parameter! 'help led' to get instructions. Inserted "
+                "parameter: '" +
+                tokens[1] + "'.");
         }
     } else {
         if (digitalRead(ledPin) == HIGH) {
@@ -32,8 +33,6 @@ void CommandInterface::ledHandler(String input) {
 void CommandInterface::tickHandler(String input) {}
 
 void CommandInterface::commandPrinter(String input) {
-    ESP_LOGI("CommandInterface", "Printing commands");
-
     std::vector<String> tokens = splitCommandsAndArgs(input);
 
     if (tokens.size() > 1) {
@@ -81,12 +80,36 @@ void CommandInterface::populateCommandMap() {
 }
 
 void CommandInterface::sendMessageToEsp(String input) {}
-void CommandInterface::simulateMQTTMessages(String input) {}
+
+void CommandInterface::simulateMQTTMessages(String input) {
+    char debugMessage[64];
+    mqttMessage mqtt;
+
+    // Find the positions of the first and second spaces
+    int firstSpace = input.indexOf(" ");
+    int secondSpace = input.indexOf(" ", firstSpace + 1);
+
+    if (firstSpace == -1 || secondSpace == -1) {
+        return;
+    }
+
+    // Extract the topic and message
+    String topic = input.substring(firstSpace + 1, secondSpace);
+    String message = input.substring(secondSpace + 1);
+
+    size_t messageLength = message.length();
+    mqtt.message = message;
+    mqtt.topic = topic;
+    
+    xQueueSend(mqttQueue, &mqtt, (TickType_t)10);
+}
+
 void CommandInterface::relayHandler(String input) {}
 
 void CommandInterface::commandEntered(String input) {
     if (input.length() == 0) return;
-
+    DebugMessage debugMessage;
+    debugMessage.sender = "command interface";
     // Create a copy of the input
     String inputCopy = input;
 
@@ -97,11 +120,15 @@ void CommandInterface::commandEntered(String input) {
     command.trim();
 
     if (commandMap.find(command) != commandMap.end()) {
-        ESP_LOGI("CommandInterface", "Command found: '%s'", command.c_str());
+        debugMessage.tick = xTaskGetTickCount();
+        debugMessage.message = "found command: '" + command + "'";
+        xQueueSend(debugQueue, &debugMessage, 0);
         // Call the handling function for the received command
         commandMap[command].func(inputCopy);
     } else {
-        ESP_LOGI("CommandInterface", "Command not found: '%s'", command.c_str());
+        debugMessage.tick = xTaskGetTickCount();
+        debugMessage.message = "Unknown command: '" + command + "'";
+        xQueueSend(debugQueue, &debugMessage, 0);
         // Handle unknown command
     }
 }
