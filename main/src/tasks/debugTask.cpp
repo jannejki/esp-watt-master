@@ -1,5 +1,4 @@
 #include "tasks/debugTask.h"
-
 #include "main.h"
 
 void debugTask(void* params) {
@@ -8,7 +7,7 @@ void debugTask(void* params) {
     DebugMessage debugMessage;
     String message;
 
-    CommandInterface commandInterface(35);
+    CommandInterface commandInterface(LED1);
     while (1) {
         if (Serial.available()) {
             char c = Serial.read();

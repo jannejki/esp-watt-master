@@ -97,11 +97,11 @@ void CommandInterface::commandEntered(String input) {
     command.trim();
 
     if (commandMap.find(command) != commandMap.end()) {
-        ESP_LOGI("CommandInterface", "Command found: %s", command.c_str());
+        ESP_LOGI("CommandInterface", "Command found: '%s'", command.c_str());
         // Call the handling function for the received command
         commandMap[command].func(inputCopy);
     } else {
-        ESP_LOGI("CommandInterface", "Command not found: %s", command.c_str());
+        ESP_LOGI("CommandInterface", "Command not found: '%s'", command.c_str());
         // Handle unknown command
     }
 }
