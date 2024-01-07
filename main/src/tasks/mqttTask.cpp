@@ -3,7 +3,7 @@
 std::vector<String> splitMQTTMessageToCommands(String input);
 std::vector<String> splitMQTTCommandsToParams(String input);
 
-RelayMessage parseMqttRelayMessage(std::vector<String> tokens);
+RelaySettings parseMqttRelaySettings(std::vector<String> tokens);
 
 /*
 void parseMqttElectricPriceMessage(std::vector<std::string> tokens,
@@ -23,11 +23,13 @@ void mqttTask(void *params) {
                 splitMQTTMessageToCommands(mqtt.message);
 
             if (mqtt.topic == "relay") {
-                RelayMessage relay = parseMqttRelayMessage(commands);
+                RelaySettings relay = parseMqttRelaySettings(commands);
 
                 if (relay.relayNumber == -1) {
                     debugMessage.message = "relay number is not set!";
                     xQueueSend(debugQueue, &debugMessage, (TickType_t)100);
+                    Serial.print("relay number is not set: ");
+                    Serial.println(relay.relayNumber);
                 } else {
                     xQueueSend(relayQueue, &relay, (TickType_t)100);
                 }
@@ -71,17 +73,17 @@ std::vector<String> splitMQTTCommandsToParams(String input) {
     return tokens;
 }
 
-struct RelayMessage parseMqttRelayMessage(std::vector<String> tokens) {
+struct RelaySettings parseMqttRelaySettings(std::vector<String> tokens) {
     int relayNumber = -1;
     enum relayMode mode = noModeChange;
     enum relayState state = noStateChange;
     double threshold = -1;
 
     DebugMessage debug;
-    debug.sender = "mqttTask ParseMqttRelayMessage";
+    debug.sender = "mqttTask ParseMqttRelaySettings";
     debug.tick = xTaskGetTickCount();
 
-    RelayMessage relay;
+    RelaySettings relaySettings;
 
     for (size_t i = 0; i < tokens.size(); ++i) {
         std::vector<String> params = splitMQTTCommandsToParams(tokens[i]);
@@ -118,10 +120,10 @@ struct RelayMessage parseMqttRelayMessage(std::vector<String> tokens) {
         }
     }
 
-    relay.relayNumber = relayNumber;
-    relay.state = state;
-    relay.mode = mode;
-    relay.threshold = threshold;
+    relaySettings.relayNumber = relayNumber;
+    relaySettings.state = state;
+    relaySettings.mode = mode;
+    relaySettings.threshold = threshold;
 
-    return relay;
+    return relaySettings;
 }

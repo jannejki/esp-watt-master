@@ -21,7 +21,7 @@ enum relayState { on, off, noStateChange };
 
 enum relayMode { automatic, manual, noModeChange };
 
-struct RelayMessage {
+struct RelaySettings {
     int relayNumber;
     enum relayState state;
     enum relayMode mode;

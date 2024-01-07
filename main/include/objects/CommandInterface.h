@@ -12,8 +12,8 @@ class CommandInterface {
     struct CommandFunction {
         String name;
         CommandHandler func;
-        String info;
-        String commands;
+        String info = "";
+        String commands = "";
     };
 
     std::map<String, CommandFunction> commandMap;

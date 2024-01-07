@@ -82,7 +82,6 @@ void CommandInterface::populateCommandMap() {
 void CommandInterface::sendMessageToEsp(String input) {}
 
 void CommandInterface::simulateMQTTMessages(String input) {
-    char debugMessage[64];
     mqttMessage mqtt;
 
     // Find the positions of the first and second spaces
@@ -97,7 +96,6 @@ void CommandInterface::simulateMQTTMessages(String input) {
     String topic = input.substring(firstSpace + 1, secondSpace);
     String message = input.substring(secondSpace + 1);
 
-    size_t messageLength = message.length();
     mqtt.message = message;
     mqtt.topic = topic;
     

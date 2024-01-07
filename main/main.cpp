@@ -13,7 +13,7 @@ extern "C" void app_main() {
 
     debugQueue = xQueueCreate(10, sizeof(DebugMessage));
     mqttQueue = xQueueCreate(10, sizeof(mqttMessage));
-    relayQueue = xQueueCreate(10, sizeof(RelayMessage));
+    relayQueue = xQueueCreate(10, sizeof(RelaySettings));
 
     // start tasks
     xTaskCreate(relayTask, "Relay task", 4096, NULL, 5, NULL);

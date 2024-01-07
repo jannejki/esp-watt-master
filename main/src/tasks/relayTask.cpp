@@ -1,22 +1,59 @@
 #include "tasks/relayTask.h"
 
 void relayTask(void* params) {
-    pinMode(0, OUTPUT);
+    Relay* relays = new Relay[3];
+
+    relays[0].initialize(LED0, 0);
+    relays[1].initialize(LED1, 1);
 
     DebugMessage debugMessage;
-    RelayMessage relayMessage;
+    RelaySettings relaySettings;
 
     while (1) {
-        if (xQueueReceive(relayQueue, &relayMessage, portMAX_DELAY) == pdTRUE) {
-            Serial.print("Relay number: ");
-            Serial.println(relayMessage.relayNumber);
-            Serial.print("Relay state: ");
-            Serial.println(relayMessage.state);
-            Serial.print("Relay mode: ");
-            Serial.println(relayMessage.mode);
-            Serial.print("Relay threshold: ");
-            Serial.println(relayMessage.threshold);
-            digitalWrite(0, HIGH);
+        if (xQueueReceive(relayQueue, &relaySettings, portMAX_DELAY) == pdTRUE) {
+            Relay::Mode mode = Relay::manual;
+            bool state = false;
+
+            switch (relaySettings.mode) {
+                case automatic:
+                    mode = Relay::automatic;
+                    break;
+                case manual:
+                    mode = Relay::manual;
+                    break;
+                case noModeChange:
+                    mode = relays[relaySettings.relayNumber].readMode();
+            }
+
+            switch (relaySettings.state) {
+                case on:
+                    state = true;
+                    relaySettings.mode = manual;
+                    mode = Relay::manual;
+                    break;
+                case off:
+                    state = false;
+                    relaySettings.mode = manual;
+                    mode = Relay::manual;
+                    break;
+                case noStateChange:
+                    state = relays[relaySettings.relayNumber].readState();
+            }
+
+            if (relaySettings.threshold != -1.0) {
+                relays[relaySettings.relayNumber].updatePriceThreshold(
+                    relaySettings.threshold);
+            }
+
+            relays[relaySettings.relayNumber].changeState(state);
+            relays[relaySettings.relayNumber].changeMode(mode);
+            
+            // Sending status to debug queue
+            String relayStatus = relays[relaySettings.relayNumber].status();
+            Serial.println(relayStatus);
+            debugMessage.message = relayStatus;
+            debugMessage.sender = "relay task";
+            xQueueSend(debugQueue, &debugMessage, 100);
         }
     }
 }
