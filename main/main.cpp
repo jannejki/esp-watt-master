@@ -20,5 +20,5 @@ extern "C" void app_main() {
     // start tasks
     xTaskCreate(relayTask, "Relay task", 4096, NULL, 5, NULL);
     xTaskCreate(debugTask, "Debug task", 4096, NULL, 5, NULL);
-    xTaskCreate(mqttTask, "mqtt task", 5120, NULL, 5, NULL);
+    xTaskCreate(mqttTask, "mqtt task", 4096, NULL, 5, NULL);
 }

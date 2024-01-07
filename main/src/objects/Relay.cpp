@@ -75,6 +75,9 @@ bool Relay::readState() { return digitalRead(pin); }
 /***************************************************/
 void Relay::changeMode(enum Relay::Mode mode) {
     this->mode = mode;
+    if(mode == automatic) {
+        changeState(this->price < this->priceThreshold);
+    }
 }
 
 enum Relay::Mode Relay::readMode() { return this->mode; }
