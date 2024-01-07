@@ -1,16 +1,19 @@
 #include "tasks/relayTask.h"
 
-void relayTask(void* params) {
-    Relay* relays = new Relay[3];
+void updateElectricPrices(double *price, Relay *relays);
+
+void relayTask(void *params) {
+    Relay *relays = new Relay[3];
 
     relays[0].initialize(LED0, 0);
     relays[1].initialize(LED1, 1);
 
     DebugMessage debugMessage;
     RelaySettings relaySettings;
+    double electricPrices[6] = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
 
     while (1) {
-        if (xQueueReceive(relayQueue, &relaySettings, portMAX_DELAY) == pdTRUE) {
+        if (xQueueReceive(relayQueue, &relaySettings, 0) == pdTRUE) {
             Relay::Mode mode = Relay::manual;
             bool state = false;
 
@@ -47,13 +50,29 @@ void relayTask(void* params) {
 
             relays[relaySettings.relayNumber].changeState(state);
             relays[relaySettings.relayNumber].changeMode(mode);
-            
+
             // Sending status to debug queue
             String relayStatus = relays[relaySettings.relayNumber].status();
             Serial.println(relayStatus);
             debugMessage.message = relayStatus;
             debugMessage.sender = "relay task";
             xQueueSend(debugQueue, &debugMessage, 100);
+
+        } else if (xQueueReceive(priceQueue, &(electricPrices), 100) ==
+                   pdPASS) {
+            Serial.println("price received");
+            updateElectricPrices(electricPrices, relays);
         }
+
+        vTaskDelay(50);
+    }
+}
+
+void updateElectricPrices(double *price, Relay *relays) {
+
+    for (int i = 0; i < sizeof(relays); i++) {  // Assuming you have 3 relays
+        relays[i].updatePrice(price[0]);
+        String status = relays[i].status();
+        Serial.println(status);
     }
 }

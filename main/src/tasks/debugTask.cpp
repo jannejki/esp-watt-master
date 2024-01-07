@@ -2,6 +2,8 @@
 
 #include "main.h"
 
+bool LOG = false;
+
 void debug(DebugMessage* debugMessage);
 
 void debugTask(void* params) {
@@ -35,9 +37,8 @@ void debugTask(void* params) {
 }
 
 void debug(DebugMessage* debugMessage) {
-#ifdef LOG
+    if (!LOG) return;
     char* message = (char*)debugMessage->message.c_str();
-    char *sender = (char*)debugMessage->sender.c_str();
+    char* sender = (char*)debugMessage->sender.c_str();
     ESP_LOGI(sender, "%s", message);
-#endif
 }

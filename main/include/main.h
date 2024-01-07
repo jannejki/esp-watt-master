@@ -4,7 +4,6 @@
 #include <Arduino.h>
 #define LED0 0
 #define LED1 35
-#define LOG 1
 
 struct DebugMessage {
     String message;
@@ -30,6 +29,7 @@ struct RelaySettings {
 
 extern QueueHandle_t debugQueue;
 extern QueueHandle_t mqttQueue;
-extern QueueHandle_t relayQueue;;
+extern QueueHandle_t relayQueue;
+extern QueueHandle_t priceQueue;
 
 #endif  // MAIN_H

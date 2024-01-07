@@ -44,6 +44,10 @@ String Relay::status() {
 /***************************************************/
 void Relay::updatePriceThreshold(double threshold) {
     this->priceThreshold = threshold;
+
+    if(this->mode == automatic) {
+        changeState(this->price < this->priceThreshold);
+    }
 }
 
 void Relay::updatePrice(double newPrice) {

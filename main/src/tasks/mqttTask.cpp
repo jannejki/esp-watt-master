@@ -5,9 +5,7 @@ std::vector<String> splitMQTTCommandsToParams(String input);
 
 RelaySettings parseMqttRelaySettings(std::vector<String> tokens);
 
-/*
-void parseMqttElectricPriceMessage(std::vector<std::string> tokens,
-double *prices);*/
+void parseMqttElectricPriceMessage(std::vector<String> tokens, double *prices);
 
 void mqttTask(void *params) {
     mqttMessage mqtt;
@@ -26,16 +24,19 @@ void mqttTask(void *params) {
                 RelaySettings relay = parseMqttRelaySettings(commands);
 
                 if (relay.relayNumber == -1) {
-                    debugMessage.message = "relay number is not set!";
-                    xQueueSend(debugQueue, &debugMessage, (TickType_t)100);
+                  /*  debugMessage.message = "relay number is not set!";
+                    xQueueSend(debugQueue, &debugMessage, (TickType_t)100);*/
                     Serial.print("relay number is not set: ");
                     Serial.println(relay.relayNumber);
+                    Serial.print("message: ");
+                    Serial.println(mqtt.message);
                 } else {
                     xQueueSend(relayQueue, &relay, (TickType_t)100);
                 }
-
             } else if (mqtt.topic == "electric/price") {
-                Serial.println("topic: electric/price");
+                double prices[6] = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
+                parseMqttElectricPriceMessage(commands, prices);
+                xQueueSend(priceQueue, &prices, (TickType_t)100);
             } else {
                 Serial.println("topic: ei tunneta");
             }
@@ -126,4 +127,28 @@ struct RelaySettings parseMqttRelaySettings(std::vector<String> tokens) {
     relaySettings.threshold = threshold;
 
     return relaySettings;
+}
+
+void parseMqttElectricPriceMessage(std::vector<String> tokens, double *prices) {
+    DebugMessage debug;
+
+    for (size_t i = 0; i < tokens.size(); ++i) {
+        std::vector<String> params = splitMQTTCommandsToParams(tokens[i]);
+        debug.message =
+            "params[0] = " + params[0] + ", params[1] = " + params[1];
+        xQueueSend(debugQueue, &debug, (TickType_t)100);
+        if (params[0] == "hour0") {
+            prices[0] = params[1].toDouble();
+        } else if (params[0] == "hour1") {
+            prices[1] = params[1].toDouble();
+        } else if (params[0] == "hour2") {
+            prices[2] = params[1].toDouble();
+        } else if (params[0] == "hour3") {
+            prices[3] = params[1].toDouble();
+        } else if (params[0] == "hour4") {
+            prices[4] = params[1].toDouble();
+        } else if (params[0] == "hour5") {
+            prices[5] = params[1].toDouble();
+        }
+    }
 }
