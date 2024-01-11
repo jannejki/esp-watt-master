@@ -2,17 +2,26 @@
 
 #include "main.h"
 
-bool LOG = false;
+bool LOG = true;
 
 void debug(DebugMessage* debugMessage);
 
 void debugTask(void* params) {
+    esp_log_level_set("*", ESP_LOG_WARN);
     Serial.begin(115200);
 
     DebugMessage debugMessage;
     String message;
 
     CommandInterface commandInterface(LED1);
+
+    EventBits_t uxBits;
+
+    /* Set DEBUG_TASK BIT in xEventGroup. */
+    uxBits = xEventGroupSetBits(
+        taskInitializedGroup, /* The event group being updated. */
+        DEBUG_TASK);          /* The bits being set. */
+    Serial.println("debugTask started");
     while (1) {
         if (Serial.available()) {
             char c = Serial.read();
@@ -38,7 +47,8 @@ void debugTask(void* params) {
 
 void debug(DebugMessage* debugMessage) {
     if (!LOG) return;
-    char* message = (char*)debugMessage->message.c_str();
-    char* sender = (char*)debugMessage->sender.c_str();
-    ESP_LOGI(sender, "%s", message);
+
+    Serial.print(debugMessage->sender);
+    Serial.print(": ");
+    Serial.println(debugMessage->message);
 }

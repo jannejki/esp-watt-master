@@ -8,7 +8,10 @@
                 "${config:idf.espIdfPathWin}/components/**",
                 "${config:idf.espAdfPath}/components/**",
                 "${config:idf.espAdfPathWin}/components/**",
-                "${workspaceFolder}/**"
+                "${workspaceFolder}/**",
+                "${workspaceFolder}/main/lib/**",
+                "A:/esp/esp-idf/components/arduino/libraries/Preferences/src",
+                "A:/esp/esp-idf/components/arduino/libraries/PubSubClient/src"
             ],
             "browse": {
                 "path": [

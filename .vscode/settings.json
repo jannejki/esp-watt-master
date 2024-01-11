@@ -19,6 +19,7 @@
         "new": "cpp",
         "*.tcc": "cpp",
         "system_error": "cpp",
-        "sstream": "cpp"
+        "sstream": "cpp",
+        "list": "cpp"
     }
 }
