@@ -1,20 +1,23 @@
 #include "tasks/internetTask.h"
+#define CONNECTION_ATTEMPT_TIMEOUT 2000
+
 void debug(String message);
 void setup_wifi();
 void reconnect();
 void callback(char* topic, byte* message, unsigned int length);
-#define CONNECTION_ATTEMPT_TIMEOUT 2000
+
 Preferences settings;
 WiFiClient espClient;
 PubSubClient client(espClient);
 
 // SSID and password of Wifi connection:
-const char* ssid = "";
-const char* password = "";
-const char* mqtt_server = "";
+const char* ssid = WIFI_SSID.c_str();
+const char* password = WIFI_PASSWORD.c_str();
+
+const char* mqtt_server = MQTT_BROKER.c_str();
 
 void internetTask(void* params) {
-    EventBits_t uxBits = xEventGroupWaitBits(
+    xEventGroupWaitBits(
         taskInitializedGroup, /* The event group being tested. */
         DEBUG_TASK,           /* The bits within the event group to wait for. */
         pdTRUE, /* DEBUG_TASK -bit should be cleared before returning. */
@@ -22,10 +25,6 @@ void internetTask(void* params) {
         portMAX_DELAY); /* Wait a maximum of 100ms for either bit to be set. */
 
     debug("internetTask started");
-
-    long lastMsg = 0;
-    char msg[50];
-    int value = 0;
 
     setup_wifi();
     client.setServer(mqtt_server, 1883);
@@ -58,14 +57,19 @@ void setup_wifi() {
 }
 
 void callback(char* topic, byte* message, unsigned int length) {
-    debug("Message arrived on topic: ");
-    debug(topic);
-    debug(". Message: ");
+    String debugString = "message length: " + String(length);
+    debug(debugString);
     String messageTemp = "";
 
     for (int i = 0; i < length; i++) {
         messageTemp += (char)message[i];
     }
+
+    mqttMessage msg;
+    msg.message = messageTemp;
+    msg.topic = topic;
+
+    xQueueSend(mqttQueue, &msg, 0);
 
     debug(messageTemp);
 }
@@ -73,13 +77,15 @@ void callback(char* topic, byte* message, unsigned int length) {
 void reconnect() {
     // Loop until we're reconnected or until timeout
     unsigned long startAttemptTime = millis();
-    while (!client.connected() && millis() - startAttemptTime < CONNECTION_ATTEMPT_TIMEOUT) {
+    while (!client.connected() &&
+           millis() - startAttemptTime < CONNECTION_ATTEMPT_TIMEOUT) {
         debug("Attempting MQTT connection...");
         // Attempt to connect
-        if (client.connect("ESP8266Client")) {
+        if (client.connect(DEVICE_ID.c_str())) {
             debug("connected");
             // Subscribe
-            client.subscribe("esp32/output");
+            client.subscribe("relay");
+            client.subscribe("electric/price");
         } else {
             debug("failed, rc=");
             debug(" try again in 5 seconds");

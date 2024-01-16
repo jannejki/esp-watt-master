@@ -5,7 +5,9 @@
 #include <PubSubClient.h>
 #include <Webserver.h>
 #include <WiFi.h>
+
 #include "../main.h"
+#include "../secrets.h"
 #include "Preferences.h"
 
 void internetTask(void* params);
