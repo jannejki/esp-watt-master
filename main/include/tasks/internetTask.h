@@ -2,13 +2,13 @@
 #define INTERNET_TASK_H
 
 #include <Arduino.h>
-#include <PubSubClient.h>
-#include <Webserver.h>
-#include <WiFi.h>
+
+#include <objects/Wifi.h>
 
 #include "../main.h"
 #include "../secrets.h"
 #include "Preferences.h"
+
 
 void internetTask(void* params);
 
