@@ -1,5 +1,5 @@
 idf_component_register(
-    SRCS "main.cpp" "src/secrets.cpp"
+    SRCS "main.cpp"
     INCLUDE_DIRS ""
 )
 

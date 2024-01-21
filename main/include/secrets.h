@@ -1,17 +1,18 @@
 /**
  * @file secrets.h
- * @brief This file contains the definitions of the secrets used in the project, like the WiFi SSID and password, the MQTT broker IP and port, and the device ID.
- * The secrets are defined in the src/secrets.cpp file.
-*/
+ * @brief This file contains the definitions of the secrets used in the project,
+ * like the WiFi SSID and password, the MQTT broker IP and port, and the device
+ * ID.
+ */
 
 #ifndef SECRECTS_H
 #define SECRECTS_H
 #include "main.h"
 
-extern String MQTT_BROKER;
-extern String MQTT_PORT;
-extern String DEVICE_ID;
+#define SECRET_WIFI_SSID "DNA-WIFI-BFE5"
+#define SECRET_WIFI_PASSWORD "sjjpu7eN"
 
-extern String WIFI_SSID;
-extern String WIFI_PASSWORD;
+#define MQTT_BROKER ""
+#define MQTT_PORT 1883
+#define DEVICE_ID "ESP32"
 #endif  // SECRECTS_H

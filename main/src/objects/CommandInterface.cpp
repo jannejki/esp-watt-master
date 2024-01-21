@@ -119,13 +119,15 @@ void CommandInterface::commandEntered(String input) {
 
     if (commandMap.find(command) != commandMap.end()) {
         debugMessage.tick = xTaskGetTickCount();
-        debugMessage.message = "found command: '" + command + "'";
+        sprintf(debugMessage.message, "found command: '%s'", command.c_str());
+
         xQueueSend(debugQueue, &debugMessage, 0);
         // Call the handling function for the received command
         commandMap[command].func(inputCopy);
     } else {
         debugMessage.tick = xTaskGetTickCount();
-        debugMessage.message = "Unknown command: '" + command + "'";
+        sprintf(debugMessage.message, "Unknown command: '%s'", command.c_str());
+
         xQueueSend(debugQueue, &debugMessage, 0);
         // Handle unknown command
     }

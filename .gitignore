@@ -1,3 +1,4 @@
 build/
 sdkconfig.old
-main/src/secrets.cpp
+
+main/include/secrets.h

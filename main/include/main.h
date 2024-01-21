@@ -9,7 +9,7 @@
 #define INTERNET_TASK (1 << 4)
 
 struct DebugMessage {
-    String message;
+    char message[64];
     String sender = "unknown";
     TickType_t tick;
 };

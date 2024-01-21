@@ -53,8 +53,10 @@ void relayTask(void *params) {
 
             // Sending status to debug queue
             String relayStatus = relays[relaySettings.relayNumber].status();
-            Serial.println(relayStatus);
-            debugMessage.message = relayStatus;
+
+            sprintf(debugMessage.message, "Relay %d: %s",
+                    relaySettings.relayNumber, relayStatus.c_str());
+
             debugMessage.sender = "relay task";
             xQueueSend(debugQueue, &debugMessage, 100);
 
@@ -69,7 +71,6 @@ void relayTask(void *params) {
 }
 
 void updateElectricPrices(double *price, Relay *relays) {
-
     for (int i = 0; i < sizeof(relays); i++) {  // Assuming you have 3 relays
         relays[i].updatePrice(price[0]);
         String status = relays[i].status();

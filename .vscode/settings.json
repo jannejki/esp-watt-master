@@ -21,5 +21,6 @@
         "system_error": "cpp",
         "sstream": "cpp",
         "list": "cpp"
-    }
+    },
+    "C_Cpp.errorSquiggles": "disabled"
 }
