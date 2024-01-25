@@ -3,6 +3,7 @@
 
 #include <map>
 #include <vector>
+
 #include "../main.h"
 
 class CommandInterface {
@@ -30,6 +31,7 @@ class CommandInterface {
     void sendMessageToEsp(String input);
     void simulateMQTTMessages(String input);
     void relayHandler(String input);
+    void restart(String input);
     void commandEntered(String input);
     std::vector<String> splitCommandsAndArgs(String input);
 };

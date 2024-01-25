@@ -50,5 +50,5 @@ void debug(DebugMessage* debugMessage) {
 
     Serial.print(debugMessage->sender);
     Serial.print(": ");
-    Serial.println(debugMessage->message);
+    Serial.print(debugMessage->message);
 }

@@ -29,7 +29,7 @@ boolean waitForDebugTask() {
         pdTRUE, /* DEBUG_TASK -bit should be cleared before returning. */
         pdTRUE, /* Don't wait for both bits, either bit will do. */
         portMAX_DELAY); /* Wait a maximum of 100ms for either bit to be set. */
-    debug("internetTask started");
+    debug("internetTask started\n\r");
 
     return true;
 }

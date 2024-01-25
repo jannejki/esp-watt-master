@@ -55,31 +55,46 @@ void CommandInterface::populateCommandMap() {
     commandMap["tick"] =
         CommandFunction{"tick", [this](String input) { tickHandler(input); },
                         "Prints current tick count", "No commands"};
+
     commandMap["help"] = CommandFunction{
         "help", [this](String input) { commandPrinter(input); },
         "Prints commands and info",
         "write help [COMMAND] to get valid commands and parameters"};
+
     commandMap["led"] =
         CommandFunction{"led", [this](String input) { ledHandler(input); },
                         "Toggles LED on or off.", " Use 'led on' or 'led off'"};
+
     commandMap["runtime"] = CommandFunction{
         "runtime", [this](String input) { runtimePrinter(input); },
         "Prints freeRTOS runtime stats"};
+
     commandMap["AT"] =
         CommandFunction{"AT", [this](String input) { sendMessageToEsp(input); },
                         "Sends AT messages to ESP."};
+
     commandMap["relay"] = CommandFunction{
         "relay", [this](String input) { relayHandler(input); },
         "Read and control relays.",
         "use 'relay [relay number] [on/off]' to toggle relays. use 'relay "
         "[relay number]' to get relay's info."};
+
     commandMap["mqtt"] = CommandFunction{
         "mqtt", [this](String input) { simulateMQTTMessages(input); },
         "Simulating MQTT messaging",
         "use 'mqtt [topic] [message]' to simulate sending mqtt messages."};
+
+    commandMap["restart"] =
+        CommandFunction{"restart", [this](String input) { restart(input); },
+                        "Restarts the ESP", "Restarts the ESP."};
 }
 
 void CommandInterface::sendMessageToEsp(String input) {}
+
+void CommandInterface::restart(String input) {
+    Serial.println("Restarting...");
+    ESP.restart();
+}
 
 void CommandInterface::simulateMQTTMessages(String input) {
     mqttMessage mqtt;
@@ -98,7 +113,7 @@ void CommandInterface::simulateMQTTMessages(String input) {
 
     mqtt.message = message;
     mqtt.topic = topic;
-    
+
     xQueueSend(mqttQueue, &mqtt, (TickType_t)10);
 }
 

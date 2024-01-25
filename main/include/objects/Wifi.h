@@ -14,6 +14,7 @@
 #include "lwip/sockets.h"
 #include "mqtt_client.h"
 #include "nvs_flash.h"
+
 #ifndef ESP_WIFI_SCAN_AUTH_MODE_THRESHOLD
 #define ESP_WIFI_SCAN_AUTH_MODE_THRESHOLD
 #endif
@@ -70,8 +71,8 @@ static int s_retry_num = 0;
 static EventGroupHandle_t s_wifi_event_group;
 
 class Wifi {
-    uint8_t ssid[32];
-    uint8_t password[64];
+    uint8_t *ssid;
+    uint8_t *password;
 
    public:
     Wifi(uint8_t *_ssid, uint8_t *_password);
