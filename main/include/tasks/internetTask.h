@@ -21,6 +21,7 @@
 #include "lwip/ip4_addr.h"
 #include "lwip/sys.h"
 #include "nvs_flash.h"
+#include "utils/file_serving_example_common.h"
 
 #define WIFI_SETTINGS_NAMESPACE "wifi"
 #define WIFI_SETTINGS_SSID_KEY "ssid"

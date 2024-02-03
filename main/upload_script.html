@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Watt-master</title>
+
+    <style>
+        :root {
+            --color-electric-blue: #87F1FF;
+            --color-charcoal: #373F51;
+            --color-sunset: #F0C987;
+        }
+
+        html {
+            font-family: "Lucida Sans Unicode";
+            text-align: center;
+            color: rgb(241, 241, 241);
+        }
+
+        body {
+            background-color: var(--color-charcoal);
+        }
+
+        #header {
+
+            padding: 0.5em;
+        }
+
+        #accessPointTable {
+            margin: auto;
+        }
+
+        #accessPointTable td {
+            padding: 0.5em;
+        }
+
+        #result {
+            display: none;
+        }
+
+        #loading {
+            height: 10px;
+            width: 100%;
+            position: relative;
+            /* Add position relative */
+        }
+
+        @keyframes scan {
+            0% {
+                left: 0;
+            }
+
+            50% {
+                left: calc(100% - 33%);
+            }
+
+            100% {
+                left: 0%;
+            }
+        }
+
+        .lds-ellipsis {
+            display: inline-block;
+            position: relative;
+            width: 80px;
+            height: 80px;
+        }
+
+        .lds-ellipsis div {
+            position: absolute;
+            top: 33px;
+            width: 13px;
+            height: 13px;
+            border-radius: 50%;
+            background: #fff;
+            animation-timing-function: cubic-bezier(0, 1, 1, 0);
+        }
+
+        .lds-ellipsis div:nth-child(1) {
+            left: 8px;
+            animation: lds-ellipsis1 0.6s infinite;
+        }
+
+        .lds-ellipsis div:nth-child(2) {
+            left: 8px;
+            animation: lds-ellipsis2 0.6s infinite;
+        }
+
+        .lds-ellipsis div:nth-child(3) {
+            left: 32px;
+            animation: lds-ellipsis2 0.6s infinite;
+        }
+
+        .lds-ellipsis div:nth-child(4) {
+            left: 56px;
+            animation: lds-ellipsis3 0.6s infinite;
+        }
+
+        @keyframes lds-ellipsis1 {
+            0% {
+                transform: scale(0);
+            }
+
+            100% {
+                transform: scale(1);
+            }
+        }
+
+        @keyframes lds-ellipsis3 {
+            0% {
+                transform: scale(1);
+            }
+
+            100% {
+                transform: scale(0);
+            }
+        }
+
+        @keyframes lds-ellipsis2 {
+            0% {
+                transform: translate(0, 0);
+            }
+
+            100% {
+                transform: translate(24px, 0);
+            }
+        }
+
+        #result h2 {
+            margin: 0;
+        }
+
+        #resultHeader {
+            margin-bottom: 1em;
+        }
+
+        .ap {
+            width: 100%;
+            padding: 1em;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="header">
+        <h1>Watt master</h1>
+    </div>
+
+    <main>
+        <p>Ei yhdistetty verkkoon.</p>
+        <div id="loading">
+            <p>Haetaan WLAN-verkkoja...</p>
+            <div class="lds-ellipsis">
+                <div></div>
+                <div></div>
+                <div></div>
+                <div></div>
+            </div>
+        </div>
+
+        <div id="result">
+            <div id="resultHeader">
+                <h2>Yhdistä WLAN-verkkoon</h2>
+                <button onclick="startScanning(this)">Päivitä</button>
+            </div>
+
+            <table id="accessPointTable">
+                <tbody>
+
+                </tbody>
+            </table>
+        </div>
+    </main>
+</body>
+
+<script>
+
+    const showTable = () => {
+        document.getElementById("loading").style.display = "none";
+        document.getElementById("result").style.display = "block";
+    }
+
+    const hideTable = () => {
+        document.getElementById("loading").style.display = "block";
+        document.getElementById("result").style.display = "none";
+    }
+
+    const connect = async (ssid) => {
+        const password = prompt(`Syötä verkon "${ssid}" salasana:`,);
+        try {
+            const rsp = await fetch("/access_points", {
+                method: "POST", // *GET, POST, PUT, DELETE, etc.
+                body: `${ssid}=${password}`, // body data type must match "Content-Type" header
+            });
+
+            if (rsp.status != 200) {
+                throw { message: "Virhe", status: rsp.status, response: rsp };
+            }
+        } catch (error) {
+            alert(error.message + error.status);
+            const data = await error.response.text();
+            console.log(data);
+        }
+    }
+
+    const parseAccessPointList = (string) => {
+        // split string from the ; to array
+        let splittedArray = string.split(";");
+        let accessPoints = [];
+        for (let ap of splittedArray) {
+            let ssid = ap.split(":")[0];
+            let rssi = ap.split(":")[1];
+            if (ssid == "") continue;
+
+            accessPoints.push({ ssid, rssi: parseInt(rssi) });
+        }
+
+        accessPoints.sort((a, b) => a.rssi < b.rssi);
+        console.log(accessPoints);
+        return accessPoints;
+    }
+
+    const createTable = (accessPoints) => {
+        let table = document.getElementById("accessPointTable");
+        let tbody = table.querySelector("tbody");
+        tbody.innerHTML = "";
+        const maxStrength = -30;
+        const minStrength = -100;
+
+        for (let ap of accessPoints) {
+            let row = document.createElement("tr");
+            let percentage = ((ap.rssi - minStrength) / (maxStrength - minStrength)) * 100;
+
+            percentage = percentage > 0 ? percentage : 0;
+            let color = colorLerp(0xff1100, 0x71ff00, percentage);
+
+            row.innerHTML = `
+            <td><button class="ap" onclick="connect('${ap.ssid}')">${ap.ssid}</button></td>
+            <td><svg width="20px" height="20px" viewBox="0 0 24 24" fill="none">
+<path d="M4 20V19M8 20V16M12 20V12M16 20V8" stroke="${color}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+</svg></td>
+            `;
+            tbody.appendChild(row);
+        }
+    }
+
+    const startScanning = async (button) => {
+        let originalText = button.innerHTML;
+        button.innerHTML = "Ladataan...";
+        try {
+            hideTable();
+            await scanAccessPoints();
+        } catch (error) {
+
+        } finally {
+            showTable();
+            button.innerHTML = originalText;
+        }
+    }
+
+    const scanAccessPoints = async () => {
+        let rsp;
+        let data; // = "Koti_655D:-81;Koti_4DD9:-81;DIRECT-4zM2020 Series:-81;HOSEN JAHANGIR:-84;DNA-WIFI-BFE5:-86;Sininen_muffini:-87;Koti_A204:-90;DNA-Mokkula-2G-N87QRR:-91;Koti_E6F5:-92;";
+        try {
+            rsp = await fetch("/access_points");
+            if (rsp.status != 200) throw { status: rsp.status, response: rsp };
+            data = await rsp.text();
+            const accessPoints = parseAccessPointList(data);
+            createTable(accessPoints);
+        } catch (error) {
+            alert("Jokin meni pieleen! " + error.status);
+        }
+    }
+
+    const colorLerp = (color1, color2, percentage) => {
+        console.log(percentage);
+        const [rStart, gStart, bStart] = [color1 & 0xff0000, color1 & 0xff00, color1 & 0xff];
+        const [rDiff, gDiff, bDiff] = [
+            (color2 & 0xff0000) - rStart,
+            (color2 & 0xff00) - gStart,
+            (color2 & 0xff) - bStart
+        ];
+
+        return '#' + (Math.floor(rStart + rDiff * percentage) & 0xff0000 |
+            Math.floor(gStart + gDiff * percentage) & 0xff00 |
+            Math.floor(bStart + bDiff * percentage) & 0xff).toString(16).padStart(6, '0');
+    }
+
+
+    setTimeout(async () => {
+        try {
+            await scanAccessPoints();
+        } catch (error) {
+            alert("Jotain meni pieleen!");
+        } finally {
+            showTable();
+        }
+
+
+    }, 1000); 
+</script>
+
+</html>
