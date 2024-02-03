@@ -18,6 +18,21 @@ void debug(const char* format, ...) {
     xQueueSend(debugQueue, &debug, 0);
 }
 
+/**
+ *
+ */
+/**
+ * @brief Event handler for WiFi and IP events.
+ *
+ * This function is responsible for handling WiFi and IP events.
+ * It gets called when a WiFi event occurs, such as STA start, STA disconnected,
+ * or when the STA gets an IP address.
+ *
+ * @param arg Pointer to the user-defined argument.
+ * @param event_base The event base of the event.
+ * @param event_id The event ID.
+ * @param event_data Pointer to the event data.
+ */
 static void event_handler(void* arg, esp_event_base_t event_base,
                           int32_t event_id, void* event_data) {
     if (event_base == WIFI_EVENT && event_id == WIFI_EVENT_STA_START) {
@@ -27,7 +42,8 @@ static void event_handler(void* arg, esp_event_base_t event_base,
         if (s_retry_num < EXAMPLE_ESP_MAXIMUM_RETRY) {
             esp_wifi_connect();
             s_retry_num++;
-            ESP_LOGI(TAG, "retry to connect to the AP");
+            debug("Could not connect to access point. Retry %d/%d...\n\r",
+                  s_retry_num, EXAMPLE_ESP_MAXIMUM_RETRY);
         } else {
             xEventGroupSetBits(s_wifi_event_group, WIFI_FAIL_BIT);
         }
@@ -42,12 +58,7 @@ static void event_handler(void* arg, esp_event_base_t event_base,
 //======================================================//
 //===================== WiFi class =====================//
 //======================================================//
-Wifi::Wifi(uint8_t* _ssid, uint8_t* _password)
-    : ssid(_ssid), password(_password) {}
-
-Wifi::~Wifi() {}
-
-void Wifi::init(void) {
+Wifi::Wifi() {
     s_wifi_event_group = xEventGroupCreate();
 
     ESP_ERROR_CHECK(esp_netif_init());
@@ -59,9 +70,19 @@ void Wifi::init(void) {
     ESP_ERROR_CHECK(esp_wifi_init(&cfg));
 
     esp_event_handler_instance_t instance_any_id;
-    esp_event_handler_instance_t instance_got_ip;
+
     ESP_ERROR_CHECK(esp_event_handler_instance_register(
         WIFI_EVENT, ESP_EVENT_ANY_ID, &event_handler, NULL, &instance_any_id));
+}
+
+Wifi::~Wifi() {}
+
+boolean Wifi::initAsStation(uint8_t* _ssid, uint8_t* _password) {
+    changeMode(WifiMode::station);
+    ssid = _ssid;
+    password = _password;
+
+    esp_event_handler_instance_t instance_got_ip;
     ESP_ERROR_CHECK(esp_event_handler_instance_register(
         IP_EVENT, IP_EVENT_STA_GOT_IP, &event_handler, NULL, &instance_got_ip));
 
@@ -82,41 +103,91 @@ void Wifi::init(void) {
     ESP_ERROR_CHECK(esp_wifi_set_config(WIFI_IF_STA, &wifi_config));
     ESP_ERROR_CHECK(esp_wifi_start());
 
+    debug("Connecting to SSID: %s password: %s\n\r", ssid, password);
+
     /* Waiting until either the connection is established (WIFI_CONNECTED_BIT)
      * or connection failed for the maximum number of re-tries (WIFI_FAIL_BIT).
      * The bits are set by event_handler() (see above) */
-    EventBits_t bits;
+    EventBits_t bits = xEventGroupWaitBits(
+        s_wifi_event_group, WIFI_CONNECTED_BIT | WIFI_FAIL_BIT, pdFALSE,
+        pdFALSE, 30000 / portTICK_PERIOD_MS);
 
-    while (1) {
-        bits = xEventGroupWaitBits(s_wifi_event_group,
-                                   WIFI_CONNECTED_BIT | WIFI_FAIL_BIT, pdFALSE,
-                                   pdFALSE, 1000 / portTICK_PERIOD_MS);
-        if (bits & WIFI_CONNECTED_BIT || bits & WIFI_FAIL_BIT) {
-            break;
-        } else {
-            debug("Waiting for wifi connection...\n\r");
-        }
-    }
     /* xEventGroupWaitBits() returns the bits before the call returned, hence we
      * can test which event actually happened. */
     if (bits & WIFI_CONNECTED_BIT) {
-        char msg[64];
-        sprintf(msg, "Connected to SSID: %s\n", ssid);
-        debug(msg);
-        esp_netif_ip_info_t ip_info;
-        esp_netif_t* sta_netif =
-            esp_netif_get_handle_from_ifkey("WIFI_STA_DEF");
-        if (sta_netif) {
-            esp_netif_get_ip_info(sta_netif, &ip_info);
+        debug("Connected to SSID: %s\n\r", ssid);
 
-            sprintf(msg, "Got IP: %s\n",
-                    ip4addr_ntoa((ip4_addr_t*)&ip_info.ip));
+        return true;
 
-            debug(msg);
-        }
     } else if (bits & WIFI_FAIL_BIT) {
         debug("Failed to connect to SSID: %s password: %s\n\r", ssid, password);
+
+        // else if either bits are set, take corresponding action
     } else {
-        debug("UNEXPECTED EVENT\n\r");
+        debug("WiFi timeout!\n\r");
     }
+    return false;
+}
+
+boolean Wifi::initAsAccessPoint() {
+    changeMode(accessPoint);
+
+    wifi_config_t wifi_config = {};
+    strncpy((char*)wifi_config.ap.ssid, SECRET_WIFI_SSID,
+            sizeof(wifi_config.ap.ssid));
+    wifi_config.ap.ssid_len = strlen(SECRET_WIFI_SSID);
+    wifi_config.ap.max_connection = 4;
+    wifi_config.ap.authmode = WIFI_AUTH_WPA_WPA2_PSK;
+
+    strncpy((char*)wifi_config.ap.password, SECRET_WIFI_PASSWORD,
+            sizeof(wifi_config.ap.password));
+    wifi_config.ap.channel = 0;
+    wifi_config.ap.ssid_hidden = 0;
+    wifi_config.ap.beacon_interval = 100;
+
+    ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_AP));
+    ESP_ERROR_CHECK(esp_wifi_set_config(WIFI_IF_AP, &wifi_config));
+    ESP_ERROR_CHECK(esp_wifi_start());
+
+    debug("Access point started!\n\rConnect to network: %s\n\r",  wifi_config.ap.ssid);
+    debug("\n\rPassword: %s \n\r",  wifi_config.ap.password);
+
+    return true;
+}
+
+void Wifi::changeMode(WifiMode mode) {
+    if (mode == Mode) {
+        return;
+    }
+
+    switch (mode) {
+        case station:
+            ESP_ERROR_CHECK(esp_wifi_stop());
+            ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_STA));
+            ESP_ERROR_CHECK(esp_wifi_start());
+            break;
+        case accessPoint:
+            ESP_ERROR_CHECK(esp_wifi_stop());
+            ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_AP));
+            ESP_ERROR_CHECK(esp_wifi_start());
+            break;
+        case stationAndAccessPoint:
+            ESP_ERROR_CHECK(esp_wifi_stop());
+            ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_APSTA));
+            ESP_ERROR_CHECK(esp_wifi_start());
+            break;
+        case none:
+            ESP_ERROR_CHECK(esp_wifi_stop());
+            break;
+    }
+
+    Mode = mode;
+}
+
+esp_err_t Wifi::getIPInfo(esp_netif_ip_info_t* ip_info) {
+    esp_netif_t* sta_netif = esp_netif_get_handle_from_ifkey("WIFI_STA_DEF");
+    if (sta_netif) {
+        return esp_netif_get_ip_info(sta_netif, ip_info);
+    }
+    return ESP_FAIL;
 }

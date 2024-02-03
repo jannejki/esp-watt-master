@@ -24,7 +24,7 @@
 #endif
 
 #ifndef CONFIG_ESP_MAXIMUM_RETRY
-#define CONFIG_ESP_MAXIMUM_RETRY 5
+#define CONFIG_ESP_MAXIMUM_RETRY 15
 #endif
 
 #define EXAMPLE_ESP_MAXIMUM_RETRY CONFIG_ESP_MAXIMUM_RETRY
@@ -75,8 +75,12 @@ class Wifi {
     uint8_t *password;
 
    public:
-    Wifi(uint8_t *_ssid, uint8_t *_password);
-    virtual ~Wifi();
+    enum WifiMode { station, accessPoint, stationAndAccessPoint, none } Mode;
 
-    void init(void);
+    Wifi();
+    virtual ~Wifi();
+    boolean initAsStation(uint8_t *ssid, uint8_t *password);
+    boolean initAsAccessPoint();
+    void changeMode(WifiMode mode);
+    esp_err_t getIPInfo(esp_netif_ip_info_t *ip_info);
 };
