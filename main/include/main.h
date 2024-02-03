@@ -2,7 +2,6 @@
 #define MAIN_H
 
 #include <Arduino.h>
-#include "utils.h"
 
 #define LED0 0
 #define LED1 35

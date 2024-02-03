@@ -1,4 +1,5 @@
 #include "../main.h"
+#include "utils/debug.h"
 
 //=============================================//
 //========== WiFi related definitions =========//
