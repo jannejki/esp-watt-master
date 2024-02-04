@@ -24,8 +24,8 @@
 #include "esp_log.h"
 #include "esp_spiffs.h"
 #include "esp_vfs.h"
-#include "utils/scanner.h"
 #include "utils/file_serving_example_common.h"
+#include "utils/scanner.h"
 
 /* Max length a file path can have on storage */
 #define FILE_PATH_MAX (ESP_VFS_PATH_MAX + CONFIG_SPIFFS_OBJ_NAME_LEN)
@@ -178,9 +178,9 @@ static esp_err_t index_handler(httpd_req_t *req) {
 static esp_err_t access_points_handler(httpd_req_t *req) {
     // start wifi scanning for access points
 
-#if 1
     ESP_LOGI(TAG, "Starting wifi scanning");
-    wifi_ap_record_t found_ssids[DEFAULT_SCAN_LIST_SIZE];
+    wifi_ap_record_t *found_ssids = (wifi_ap_record_t *)malloc(
+        DEFAULT_SCAN_LIST_SIZE * sizeof(wifi_ap_record_t));
     int amount = wifi_scan(found_ssids);
     ESP_LOGI(TAG, "Total APs to be printed = %u", amount);
     int maxAmount = amount > 10 ? DEFAULT_SCAN_LIST_SIZE : amount;
@@ -193,10 +193,9 @@ static esp_err_t access_points_handler(httpd_req_t *req) {
             ESP_ERROR_CHECK(httpd_resp_sendstr_chunk(req, buff));
         }
     }
-#endif
 
     ESP_LOGI(TAG, "Finished wifi scanning");
-
+    free(found_ssids);
     /* Send empty chunk to signal HTTP response completion */
     ESP_ERROR_CHECK(httpd_resp_sendstr_chunk(req, NULL));
     ESP_LOGI(TAG, "File list sent successfully");
@@ -258,7 +257,7 @@ esp_err_t example_start_file_server(const char *base_path) {
 
     httpd_handle_t server = NULL;
     httpd_config_t config = HTTPD_DEFAULT_CONFIG();
-    config.stack_size = 32768;  // 8 KB stack size
+    config.stack_size = 40960;  // 8 KB stack size
 
     /* Use the URI wildcard matching function in order to
      * allow the same handler to respond to multiple different

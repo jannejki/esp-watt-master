@@ -140,6 +140,11 @@
             width: 100%;
             padding: 1em;
         }
+
+        .ap button {
+            display: flex;
+            flex-direction: row;
+        }
     </style>
 </head>
 
@@ -163,7 +168,7 @@
         <div id="result">
             <div id="resultHeader">
                 <h2>Yhdistä WLAN-verkkoon</h2>
-                <button onclick="startScanning(this)">Päivitä</button>
+                <!--  <button onclick="startScanning(this)">Päivitä</button>-->
             </div>
 
             <table id="accessPointTable">
@@ -189,6 +194,8 @@
 
     const connect = async (ssid) => {
         const password = prompt(`Syötä verkon "${ssid}" salasana:`,);
+        if (password == null) return;
+
         try {
             const rsp = await fetch("/access_points", {
                 method: "POST", // *GET, POST, PUT, DELETE, etc.
@@ -231,16 +238,20 @@
 
         for (let ap of accessPoints) {
             let row = document.createElement("tr");
-            let percentage = ((ap.rssi - minStrength) / (maxStrength - minStrength)) * 100;
-
-            percentage = percentage > 0 ? percentage : 0;
+            let rssi = ap.rssi < maxStrength ? ap.rssi : maxStrength;
+ 
+            let percentage = ((rssi - minStrength) / (maxStrength - minStrength)) * 100;
+            percentage = percentage > 0 ? percentage / 100 : 0;
             let color = colorLerp(0xff1100, 0x71ff00, percentage);
 
             row.innerHTML = `
-            <td><button class="ap" onclick="connect('${ap.ssid}')">${ap.ssid}</button></td>
-            <td><svg width="20px" height="20px" viewBox="0 0 24 24" fill="none">
-<path d="M4 20V19M8 20V16M12 20V12M16 20V8" stroke="${color}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-</svg></td>
+            <td>
+                <button class="ap" onclick="connect('${ap.ssid}')"><p>${ap.ssid}</p>
+                    <svg width="20px" height="20px" viewBox="0 0 24 24" fill="none">
+                        <path d="M4 20V19M8 20V16M12 20V12M16 20V8" stroke="${color}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                </button>
+                </td>
             `;
             tbody.appendChild(row);
         }
@@ -262,7 +273,8 @@
 
     const scanAccessPoints = async () => {
         let rsp;
-        let data; // = "Koti_655D:-81;Koti_4DD9:-81;DIRECT-4zM2020 Series:-81;HOSEN JAHANGIR:-84;DNA-WIFI-BFE5:-86;Sininen_muffini:-87;Koti_A204:-90;DNA-Mokkula-2G-N87QRR:-91;Koti_E6F5:-92;";
+        // let data = "Koti_655D:-30;Koti_4DD9:-40;DIRECT-4zM2020 Series:-50;HOSEN JAHANGIR:-60;DNA-WIFI-BFE5:-65;Sininen_muffini:-70;Koti_A204:-80;DNA-Mokkula-2G-N87QRR:-90;Koti_E6F5:-95;";
+        let data;
         try {
             rsp = await fetch("/access_points");
             if (rsp.status != 200) throw { status: rsp.status, response: rsp };
@@ -275,7 +287,7 @@
     }
 
     const colorLerp = (color1, color2, percentage) => {
-        console.log(percentage);
+
         const [rStart, gStart, bStart] = [color1 & 0xff0000, color1 & 0xff00, color1 & 0xff];
         const [rDiff, gDiff, bDiff] = [
             (color2 & 0xff0000) - rStart,

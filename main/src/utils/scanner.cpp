@@ -5,11 +5,10 @@ static const char* TAG = "Scanner";
 /**
  * @param found_ssids: array of found ssids
  */
-int wifi_scan(wifi_ap_record_t* found_ssids) {
+int wifi_scan(wifi_ap_record_t* ap_info) {
     uint16_t number = DEFAULT_SCAN_LIST_SIZE;
-    wifi_ap_record_t ap_info[DEFAULT_SCAN_LIST_SIZE];
+    //wifi_ap_record_t ap_info[DEFAULT_SCAN_LIST_SIZE];
     uint16_t ap_count = 0;
-    memset(ap_info, 0, sizeof(ap_info));
 
     wifi_scan_config_t scan_config;
     scan_config.ssid = 0;
@@ -28,12 +27,15 @@ int wifi_scan(wifi_ap_record_t* found_ssids) {
     ESP_ERROR_CHECK(esp_wifi_scan_get_ap_records(&number, ap_info));
     ESP_LOGI(TAG, "Total APs scanned = %u", ap_count);
 
-    for (int i = 0; i < ap_count; i++) {
-        memcpy(&found_ssids[i], &ap_info[i], sizeof(wifi_ap_record_t));
-    }
 
     // stop wifi scan
-    esp_wifi_scan_stop();
+    esp_err_t result = esp_wifi_scan_stop();
+    if(result != ESP_OK) {
+        ESP_LOGE(TAG, "Failed to stop wifi scan");
+        
+    } else {
+        ESP_LOGI(TAG, "Wifi scan stopped");
+    }
 
     return ap_count;
 }

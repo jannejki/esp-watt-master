@@ -32,11 +32,6 @@ void internetTask(void* params) {
         ret = nvs_flash_init();
     }
 
-    size_t mem = xPortGetFreeHeapSize();
-
-    ESP_LOGI(TAG, "SIZE_MAX = %zu\n", mem);
-
-#if 1
     ESP_ERROR_CHECK(ret);
     ESP_ERROR_CHECK(esp_netif_init());
     ESP_ERROR_CHECK(esp_event_loop_create_default());
@@ -95,26 +90,17 @@ void internetTask(void* params) {
              EXAMPLE_ESP_WIFI_CHANNEL);
 
     ESP_ERROR_CHECK(esp_wifi_start());
-    wifi_ap_record_t found_ssids[DEFAULT_SCAN_LIST_SIZE];
-    int amount = wifi_scan(found_ssids);
-    ESP_LOGI(TAG, "Total APs to be printed = %u", amount);
-    int maxAmount = amount > 10 ? DEFAULT_SCAN_LIST_SIZE : amount;
-    for(int i = 0; i < maxAmount; i++) {
-        ESP_LOGI(TAG, "SSID: %s", found_ssids[i].ssid);
-    }
 
-#endif
-//=======================================================================
-//======================== HTTPD Server =================================
-//=======================================================================
-#if 1
+    //=======================================================================
+    //======================== HTTPD Server =================================
+    //=======================================================================
     const char* base_path = "/data";
     ESP_ERROR_CHECK(example_mount_storage(base_path));
 
     /* Start the file server */
     ESP_ERROR_CHECK(example_start_file_server(base_path));
     ESP_LOGI(TAG, "File server started");
-#endif
+
     while (1) {
         vTaskDelay(1000 / portTICK_PERIOD_MS);
     }
