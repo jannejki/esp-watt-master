@@ -7,7 +7,7 @@ bool LOG = true;
 void debug(DebugMessage* debugMessage);
 
 void debugTask(void* params) {
-    esp_log_level_set("*", ESP_LOG_WARN);
+ 
     Serial.begin(115200);
 
     DebugMessage debugMessage;

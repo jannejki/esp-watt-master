@@ -2,7 +2,6 @@
 #define MAIN_H
 
 #include <Arduino.h>
-#include "utils.h"
 
 #define LED0 0
 #define LED1 35
@@ -32,10 +31,17 @@ struct RelaySettings {
     double threshold;
 };
 
+struct WifiSettings {
+    String ssid;
+    String password;
+    EventGroupHandle_t connectionFlag;
+};
+
 extern QueueHandle_t debugQueue;
 extern QueueHandle_t mqttQueue;
 extern QueueHandle_t relayQueue;
 extern QueueHandle_t priceQueue;
+extern QueueHandle_t wifiSettingsQueue;
 
 extern EventGroupHandle_t taskInitializedGroup;
 #endif  // MAIN_H
