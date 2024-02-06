@@ -11,6 +11,8 @@
             --color-electric-blue: #87F1FF;
             --color-charcoal: #373F51;
             --color-sunset: #F0C987;
+            --color-success: #44CF6C;
+            --color-error: #DD403A;
         }
 
         html {
@@ -65,37 +67,54 @@
             display: inline-block;
             position: relative;
             width: 80px;
-            height: 80px;
+            height: 40px;
+        }
+
+
+        .background-color-transition {
+            transition-property: background;
+            transition-duration: 0.2s;
+            transition-timing-function: linear;
+        }
+
+        .success {
+            background: var(--color-success) !important;
         }
 
         .lds-ellipsis div {
             position: absolute;
-            top: 33px;
+            top: 33%;
             width: 13px;
             height: 13px;
             border-radius: 50%;
-            background: #fff;
+            background: var(--color-sunset);
             animation-timing-function: cubic-bezier(0, 1, 1, 0);
         }
+
+
 
         .lds-ellipsis div:nth-child(1) {
             left: 8px;
             animation: lds-ellipsis1 0.6s infinite;
+            animation-fill-mode: forwards;
         }
 
         .lds-ellipsis div:nth-child(2) {
             left: 8px;
             animation: lds-ellipsis2 0.6s infinite;
+            animation-fill-mode: forwards;
         }
 
         .lds-ellipsis div:nth-child(3) {
             left: 32px;
             animation: lds-ellipsis2 0.6s infinite;
+            animation-fill-mode: forwards;
         }
 
         .lds-ellipsis div:nth-child(4) {
             left: 56px;
             animation: lds-ellipsis3 0.6s infinite;
+            animation-fill-mode: forwards;
         }
 
         @keyframes lds-ellipsis1 {
@@ -128,6 +147,23 @@
             }
         }
 
+        .disappear {
+            animation-name: changeBalls;
+            animation-duration: 2s;
+        }
+
+        @keyframes changeBalls {
+            0% {
+                transform: scale(1);
+            }
+
+            100% {
+                transform: scale(0);
+                left: 32px;
+            }
+        }
+
+
         #result h2 {
             margin: 0;
         }
@@ -139,11 +175,15 @@
         .ap {
             width: 100%;
             padding: 1em;
+            border-radius: 1em;
+            -webkit-box-shadow: 0px 0px 10px 2px rgba(0, 0, 0, 0.75);
+            -moz-box-shadow: 0px 0px 10px 2px rgba(0, 0, 0, 0.75);
+            box-shadow: 0px 0px 10px 2px rgba(0, 0, 0, 0.75);
         }
 
-        .ap button {
-            display: flex;
-            flex-direction: row;
+
+        .toggleSpan {
+            display: none;
         }
     </style>
 </head>
@@ -154,7 +194,10 @@
     </div>
 
     <main>
-        <p>Ei yhdistetty verkkoon.</p>
+        <span id="connected" class="toggleSpan"></span>
+        <span id="not_connected" class="toggleSpan">
+            <p>Ei yhdistetty verkkoon.</p>
+        </span>
         <div id="loading">
             <p>Haetaan WLAN-verkkoja...</p>
             <div class="lds-ellipsis">
@@ -168,6 +211,7 @@
         <div id="result">
             <div id="resultHeader">
                 <h2>Yhdistä WLAN-verkkoon</h2>
+
                 <!--  <button onclick="startScanning(this)">Päivitä</button>-->
             </div>
 
@@ -181,6 +225,7 @@
 </body>
 
 <script>
+    let connecting = false;
 
     const showTable = () => {
         document.getElementById("loading").style.display = "none";
@@ -192,23 +237,99 @@
         document.getElementById("result").style.display = "none";
     }
 
+    const showConnectedInfo = (wlan) => {
+        let span = document.getElementById('connected');
+        span.innerHTML = `Yhdistetty verkkoon: ${wlan.ssid}<br>IP-osoite: ${wlan.ipaddress}`;
+        span.style.display = 'block';
+        document.getElementById('not_connected').style.display = "none";
+    }
+
+
+    const delay = async (time) => {
+        return new Promise((resolve) => {
+            setTimeout(() => {
+                resolve(true);
+            }, time);
+        });
+    }
+
+    const removeLoadingIcon = (loadingIcon) => {
+        // get the parent of the loading icon
+        if (loadingIcon == null) return;
+        let parent = loadingIcon.parentElement;
+        loadingIcon.remove();
+        parent.querySelector(".signalStrength").style.display = "initial";
+    }
+
     const connect = async (ssid) => {
+        if (connecting) return;
         const password = prompt(`Syötä verkon "${ssid}" salasana:`,);
         if (password == null) return;
+        connecting = true;
+        let button = document.getElementById(ssid);
+        const buttons = document.querySelectorAll(".ssidButton");
 
+        for (let button of buttons) {
+            if (button.id == ssid) continue;
+            button.disabled = true;
+        }
+
+        button.querySelector(".signalStrength").style.display = "none";
+        button.style.maxHeight = "150px";
+        let loadingIcon = document.createElement("div");
+        loadingIcon.classList.add("lds-ellipsis");
+        loadingIcon.innerHTML = `<div></div>
+                <div></div>
+                <div></div>
+                <div></div>`;
+        button.appendChild(loadingIcon);
         try {
-            const rsp = await fetch("/access_points", {
-                method: "POST", // *GET, POST, PUT, DELETE, etc.
-                body: `${ssid}=${password}`, // body data type must match "Content-Type" header
-            });
+            let data;
+            if (1) {
+                const rsp = await fetch("/access_points", {
+                    method: "POST",
+                    body: `${ssid}=${password}`,
+                });
 
-            if (rsp.status != 200) {
-                throw { message: "Virhe", status: rsp.status, response: rsp };
+                if (rsp.status != 200) {
+                    throw { message: "Virhe", status: rsp.status, response: rsp };
+                }
+                data = await rsp.text();
+            } else {
+                data = "{\"ssid\":\"testi\", \"ipaddress\":\"192.152.222.22\"}";
+                await delay(2000);
+
             }
+            let jsonData = JSON.parse(data);
+            showConnectedInfo(jsonData);
+
         } catch (error) {
             alert(error.message + error.status);
             const data = await error.response.text();
-            console.log(data);
+            console.error(error);
+            console.log({ data });
+        } finally {
+
+            let balls = loadingIcon.querySelectorAll('div');
+            let removeIconTimeoutSet = false;
+
+            for (let ball of balls) {
+                ball.addEventListener("animationiteration", () => {
+                    ball.style.animation = "changeBalls 0.6s forwards";
+                    if (removeIconTimeoutSet) return;
+                    setTimeout(() => {
+                        removeLoadingIcon(loadingIcon);
+                    }, 600);
+                    removeIconTimeoutSet = true;
+                })
+            }
+
+            for (let button of buttons) {
+                if (button.id == ssid) continue;
+                button.disabled = false;
+            }
+            connecting = false;
+
         }
     }
 
@@ -225,7 +346,6 @@
         }
 
         accessPoints.sort((a, b) => a.rssi < b.rssi);
-        console.log(accessPoints);
         return accessPoints;
     }
 
@@ -239,17 +359,18 @@
         for (let ap of accessPoints) {
             let row = document.createElement("tr");
             let rssi = ap.rssi < maxStrength ? ap.rssi : maxStrength;
- 
+
             let percentage = ((rssi - minStrength) / (maxStrength - minStrength)) * 100;
             percentage = percentage > 0 ? percentage / 100 : 0;
             let color = colorLerp(0xff1100, 0x71ff00, percentage);
 
             row.innerHTML = `
             <td>
-                <button class="ap" onclick="connect('${ap.ssid}')"><p>${ap.ssid}</p>
-                    <svg width="20px" height="20px" viewBox="0 0 24 24" fill="none">
+                <button class="ap loader ssidButton" onclick="connect('${ap.ssid}')" id=${ap.ssid}><p>${ap.ssid}</p>
+                    <svg class="signalStrength" width="20px" height="20px" viewBox="0 0 24 24" fill="none">
                         <path d="M4 20V19M8 20V16M12 20V12M16 20V8" stroke="${color}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                     </svg>
+
                 </button>
                 </td>
             `;
@@ -270,6 +391,21 @@
             button.innerHTML = originalText;
         }
     }
+    /*
+       const scanAccessPoints = async () => {
+           let rsp;
+           let data = "Koti_655D:-30;Koti_4DD9:-40;DIRECT-4zM2020 Series:-50;HOSEN JAHANGIR:-60;DNA-WIFI-BFE5:-65;Sininen_muffini:-70;Koti_A204:-80;DNA-Mokkula-2G-N87QRR:-90;Koti_E6F5:-95;";
+   
+           try {
+               const accessPoints = parseAccessPointList(data);
+               createTable(accessPoints);
+           } catch (error) {
+   
+               alert("Jokin meni pieleen! " + error.status);
+           }
+       }
+       */
+
 
     const scanAccessPoints = async () => {
         let rsp;
@@ -285,6 +421,7 @@
             alert("Jokin meni pieleen! " + error.status);
         }
     }
+
 
     const colorLerp = (color1, color2, percentage) => {
 
@@ -309,9 +446,12 @@
         } finally {
             showTable();
         }
-
-
-    }, 1000); 
+    }, 100); 
 </script>
-
+<!-- <script>
+    let span = document.getElementById("connected");
+    span.innerHTML = "Yhdistetty verkkoon: DNA-WIFI-BFE5<br>IP-osoite: 192.168.1.1";
+    span.style.display = "block";
+</script>
 </html>
+-->

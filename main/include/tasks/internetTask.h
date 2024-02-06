@@ -2,12 +2,8 @@
 #define INTERNET_TASK_H
 
 #include <Arduino.h>
-#include <objects/Wifi.h>
 
 #include "../main.h"
-#include "utils/scanner.h"
-#include "utils/debug.h"
-
 #include "../secrets.h"
 #include "Preferences.h"
 #include "esp_event.h"
@@ -21,11 +17,15 @@
 #include "lwip/ip4_addr.h"
 #include "lwip/sys.h"
 #include "nvs_flash.h"
+#include "utils/debug.h"
 #include "utils/file_serving_example_common.h"
+#include "utils/scanner.h"
+#include "utils/wifi.h"
 
 #define WIFI_SETTINGS_NAMESPACE "wifi"
 #define WIFI_SETTINGS_SSID_KEY "ssid"
 #define WIFI_SETTINGS_PASSWORD_KEY "password"
+#define TAG "internetTask"
 
 void internetTask(void* params);
 

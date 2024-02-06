@@ -1,15 +1,16 @@
 #include "main.h"
 
+#include "esp_task_wdt.h"
 #include "tasks/debugTask.h"
 #include "tasks/internetTask.h"
 #include "tasks/mqttTask.h"
 #include "tasks/relayTask.h"
-#include "esp_task_wdt.h"
 
 QueueHandle_t debugQueue;
 QueueHandle_t mqttQueue;
 QueueHandle_t relayQueue;
 QueueHandle_t priceQueue;
+QueueHandle_t wifiSettingsQueue;
 EventBits_t uxBits;
 
 EventGroupHandle_t taskInitializedGroup;
@@ -21,6 +22,7 @@ extern "C" void app_main() {
     mqttQueue = xQueueCreate(10, sizeof(mqttMessage));
     relayQueue = xQueueCreate(10, sizeof(RelaySettings));
     priceQueue = xQueueCreate(10, sizeof(double[6]));
+    wifiSettingsQueue = xQueueCreate(1, sizeof(WifiSettings));
 
     taskInitializedGroup = xEventGroupCreate();
 

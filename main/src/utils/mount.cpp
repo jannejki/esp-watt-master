@@ -32,7 +32,7 @@
 static const char* TAG = "example_mount";
 
 /* Function to initialize SPIFFS */
-esp_err_t example_mount_storage(const char* base_path) {
+esp_err_t mountHTMLStorage(const char* base_path) {
     ESP_LOGI(TAG, "Initializing SPIFFS");
 
     esp_vfs_spiffs_conf_t conf = {
