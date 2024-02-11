@@ -18,9 +18,11 @@
 #include "lwip/sys.h"
 #include "nvs_flash.h"
 #include "utils/debug.h"
+#include "utils/mqtt.h"
 #include "utils/file_serving_example_common.h"
 #include "utils/scanner.h"
 #include "utils/wifi.h"
+
 
 #define WIFI_SETTINGS_NAMESPACE "wifi"
 #define WIFI_SETTINGS_SSID_KEY "ssid"

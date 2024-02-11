@@ -132,6 +132,7 @@ esp_err_t initWifi() {
 
     esp_netif_t* sta_netif = esp_netif_create_default_wifi_sta();
 
+#if 0   // This is not needed, as the default mode is WIFI_MODE_STA
     esp_netif_t* ap_netif =
         esp_netif_create_default_wifi_ap();  // Initialize ap_netif properly
     wifi_init_config_t cfg = WIFI_INIT_CONFIG_DEFAULT();
@@ -182,13 +183,20 @@ esp_err_t initWifi() {
     ESP_LOGI(TAG, "wifi_init_softap finished. SSID:%s password:%s channel:%d",
         EXAMPLE_ESP_WIFI_SSID, EXAMPLE_ESP_WIFI_PASS,
         EXAMPLE_ESP_WIFI_CHANNEL);
-
+#else
+    wifi_init_config_t cfg = WIFI_INIT_CONFIG_DEFAULT();
+    ESP_ERROR_CHECK(esp_wifi_init(&cfg));
+    esp_wifi_set_mode(WIFI_MODE_STA);
+#endif
     ESP_ERROR_CHECK(esp_wifi_start());
     return ESP_OK;
 }
 
-EventBits_t connectToWifi(const String& ssid, const String& password) {
+void initWifiAP() {
 
+}
+
+EventBits_t connectToWifi(const String& ssid, const String& password) {
     // If event group is null, then this is the first time trying to connect to Access Point
     if (s_wifi_event_group == NULL) {
         // If the event group hasn't been created yet, create it

@@ -26,12 +26,13 @@ extern EventGroupHandle_t s_wifi_event_group;
 
 enum WifiState { CONNECTED, DISCONNECTED, NOT_INITIALIZED };
 
+#if 0
 static void wifi_event_handler(void* arg, esp_event_base_t event_base,
     int32_t event_id, void* event_data);
 
 static void event_handler(void* arg, esp_event_base_t event_base,
     int32_t event_id, void* event_data);
-
+#endif
 esp_err_t getIPInfo(esp_netif_ip_info_t* ip_info);
 WifiState getWifiState(WifiSettings* settings);
 

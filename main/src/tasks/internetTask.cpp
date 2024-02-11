@@ -1,6 +1,11 @@
 #include "tasks/internetTask.h"
 
 boolean waitForDebugTask();
+
+
+//=======================================================================
+//======================== WiFI station =================================
+//=======================================================================
 Preferences wifiSettings;
 boolean connectToNewWifi(WifiSettings settings) {
     EventBits_t wifiStateBits = connectToWifi(settings.ssid, settings.password);
@@ -9,9 +14,8 @@ boolean connectToNewWifi(WifiSettings settings) {
     boolean connected = wifiStateBits & WIFI_CONNECTED_BIT;
 
     if (connected) {
-        //  wifiSettings.putString(WIFI_SETTINGS_SSID_KEY, newWifiSettings.ssid);
-        //  wifiSettings.putString(WIFI_SETTINGS_PASSWORD_KEY, newWifiSettings.password);
-
+        wifiSettings.putString(WIFI_SETTINGS_SSID_KEY, settings.ssid);
+        wifiSettings.putString(WIFI_SETTINGS_PASSWORD_KEY, settings.password);
         ESP_LOGI(TAG, "Saved new wifi settings! ssid: %s, password: %s", settings.ssid.c_str(), settings.password.c_str());
     }
 
@@ -51,6 +55,7 @@ void internetTask(void* params) {
     WifiSettings newWifiSettings;
     EventBits_t wifiStateBits;
     boolean connected = false;
+
     while (!connected) {
         if (ssid == "" || password == "") {
             if (xQueueReceive(wifiSettingsQueue, &newWifiSettings, WIFI_TIMEOUT + 1000 / portTICK_PERIOD_MS) == pdTRUE) {
@@ -62,15 +67,17 @@ void internetTask(void* params) {
             wifiStateBits = connectToWifi(ssid, password);
             connected = wifiStateBits & WIFI_CONNECTED_BIT;
         }
-
     }
+
+    ESP_LOGI(TAG, "Connected to wifi!", );
+
+    mqtt_app_start();
 
     while (1) {
         if (xQueueReceive(wifiSettingsQueue, &newWifiSettings, 0) == pdTRUE) {
             ESP_LOGI(TAG, "Received new wifi settings from queue");
             connected = connectToNewWifi(newWifiSettings);
         }
-
 
         vTaskDelay(50 / portTICK_PERIOD_MS);
     }
