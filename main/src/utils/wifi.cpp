@@ -1,3 +1,4 @@
+#if 0
 #include "utils/wifi.h"
 #define TAG "wifi"
 
@@ -259,3 +260,5 @@ EventBits_t connectToWifi(const String& ssid, const String& password) {
 
     return bits;
 }
+
+#endif

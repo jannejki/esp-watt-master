@@ -9,6 +9,7 @@
 #define DEBUG_TASK (1 << 0)
 #define INTERNET_TASK (1 << 4)
 
+
 struct DebugMessage {
     char message[64];
     String sender = "unknown";
@@ -18,6 +19,12 @@ struct DebugMessage {
 struct mqttMessage {
     String topic;
     String message;
+};
+
+struct ledBlinkTaskParams {
+    uint8_t pin;
+    int delay;
+    bool *loopFinished;
 };
 
 enum relayState { on, off, noStateChange };

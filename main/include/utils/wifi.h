@@ -1,4 +1,4 @@
-#ifndef WIFI_H_
+#if 0
 #define WIFI_H_
 
 #include "esp_event.h"

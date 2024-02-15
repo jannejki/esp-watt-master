@@ -11,9 +11,8 @@
     software is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
     CONDITIONS OF ANY KIND, either express or implied.
  */
-
+#if 0
 #pragma once
-
 #include "../main.h"
 #include "FreeRTOS/event_groups.h"
 #include "esp_err.h"
@@ -26,4 +25,5 @@ extern "C" {
 
 #ifdef __cplusplus
 }
+#endif 
 #endif

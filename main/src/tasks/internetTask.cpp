@@ -6,80 +6,73 @@ boolean waitForDebugTask();
 //=======================================================================
 //======================== WiFI station =================================
 //=======================================================================
+
 Preferences wifiSettings;
-boolean connectToNewWifi(WifiSettings settings) {
-    EventBits_t wifiStateBits = connectToWifi(settings.ssid, settings.password);
-    xEventGroupSetBits(settings.connectionFlag, wifiStateBits);
-
-    boolean connected = wifiStateBits & WIFI_CONNECTED_BIT;
-
-    if (connected) {
-        wifiSettings.putString(WIFI_SETTINGS_SSID_KEY, settings.ssid);
-        wifiSettings.putString(WIFI_SETTINGS_PASSWORD_KEY, settings.password);
-        ESP_LOGI(TAG, "Saved new wifi settings! ssid: %s, password: %s", settings.ssid.c_str(), settings.password.c_str());
-    }
-
-    return connected;
-}
 
 void internetTask(void* params) {
     waitForDebugTask();
-
-    esp_err_t initialized = initWifi();
-
-    if (initialized != ESP_OK) {
-        ESP_LOGE(TAG, "Failed to initialize wifi!");
-        ESP_LOGE(TAG, "Restarting in 10");
-        for (int i = 10; i > 0; i--) {
-            ESP_LOGE(TAG, "%d", i);
-        }
-    }
-    //=======================================================================
-    //======================== HTTPD Server =================================
-    //=======================================================================
-    const char* base_path = "/data";
-    ESP_ERROR_CHECK(mountHTMLStorage(base_path));
-
-    /* Start the file server */
-    ESP_ERROR_CHECK(startHTTPServer(base_path));
-    ESP_LOGI(TAG, "File server started");
-
-    //=======================================================================
-    //======================== WiFI station =================================
-    //=======================================================================
+    TaskHandle_t ledTask = NULL;
     wifiSettings.begin("wifi", false);
-
+    uint8_t mqttLedPin = 4;
+    uint8_t wifiLedPin = 5;
+    pinMode(wifiLedPin, OUTPUT);
+    pinMode(mqttLedPin, OUTPUT);
+    
     String ssid = wifiSettings.getString(WIFI_SETTINGS_SSID_KEY);
     String password = wifiSettings.getString(WIFI_SETTINGS_PASSWORD_KEY);
+    Wifi wifi;
 
-    WifiSettings newWifiSettings;
-    EventBits_t wifiStateBits;
-    boolean connected = false;
+    bool ledTaskFinished = false;
+    int delay = 1000;
+    struct ledBlinkTaskParams wifiLed = { wifiLedPin, delay, &ledTaskFinished };
+    struct ledBlinkTaskParams mqttLed = { mqttLedPin, delay, &ledTaskFinished };
 
-    while (!connected) {
-        if (ssid == "" || password == "") {
-            if (xQueueReceive(wifiSettingsQueue, &newWifiSettings, WIFI_TIMEOUT + 1000 / portTICK_PERIOD_MS) == pdTRUE) {
-                connected = connectToNewWifi(newWifiSettings);
-            }
-        }
 
-        else {
-            wifiStateBits = connectToWifi(ssid, password);
-            connected = wifiStateBits & WIFI_CONNECTED_BIT;
+    vTaskDelay(2000);
+    if (ledTask == NULL) {
+        xTaskCreate(
+            ledBlinkTask,       /* Function that implements the task. */
+            "WIFI_LED",          /* Text name for the task. */
+            4096,      /* Stack size in words, not bytes. */
+            (void*)&wifiLed,    /* Parameter passed into the task. */
+            tskIDLE_PRIORITY,/* Priority at which the task is created. */
+            &ledTask);      /* Used to pass out the created task's handle. */
+    }
+
+
+    wifi.mode(WIFI_MODE_STA);
+
+    WifiState wifiState = wifi.connectToWifi(ssid, password);
+    while (!ledTaskFinished) {/*Wait for ledTask to finish*/ }
+    vTaskDelete(ledTask);
+    ledTask = NULL;
+    WifiSettings settings;
+    if (wifiState == DISCONNECTED) {
+        ESP_LOGE("internetTask", "Failed to connect to WiFi");
+        wifi.mode(WIFI_MODE_APSTA);
+        digitalWrite(wifiLedPin, HIGH);
+
+        while (wifiState == DISCONNECTED) {
+            wifiState = wifi.getWifiState(&settings);
+            ESP_LOGI("internetTask", "Wifi state: %d", wifiState);
+
+            vTaskDelay(1000);
         }
     }
 
-    ESP_LOGI(TAG, "Connected to wifi!", );
-
-    mqtt_app_start();
+    ESP_LOGI("internetTask", "Connected to WiFi");
+    if (ledTask == NULL) {
+        xTaskCreate(ledBlinkTask,
+            "MQTT_LED",
+            4096,
+            (void*)&mqttLed,
+            tskIDLE_PRIORITY,
+            &ledTask);
+    }
 
     while (1) {
-        if (xQueueReceive(wifiSettingsQueue, &newWifiSettings, 0) == pdTRUE) {
-            ESP_LOGI(TAG, "Received new wifi settings from queue");
-            connected = connectToNewWifi(newWifiSettings);
-        }
 
-        vTaskDelay(50 / portTICK_PERIOD_MS);
+        vTaskDelay(1000);
     }
 }
 

@@ -31,5 +31,5 @@ extern "C" void app_main() {
     xTaskCreate(debugTask, "Debug task", 4096, NULL, 5, NULL);
     xTaskCreate(relayTask, "Relay task", 4096, NULL, 5, NULL);
     xTaskCreate(mqttTask, "mqtt task", 4096, NULL, 5, NULL);
-    xTaskCreate(internetTask, "internet task", 24576, NULL, 5, NULL);
+    xTaskCreate(internetTask, "internet task", 24576 + configMINIMAL_STACK_SIZE, NULL, 5, NULL);
 }

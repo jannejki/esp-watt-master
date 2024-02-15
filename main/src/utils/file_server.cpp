@@ -11,7 +11,7 @@
     software is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
     CONDITIONS OF ANY KIND, either express or implied.
  */
-
+#if 0
 #include <dirent.h>
 #include <stdio.h>
 #include <string.h>
@@ -370,3 +370,4 @@ esp_err_t startHTTPServer(const char* base_path) {
     httpd_register_uri_handler(server, &access_points_post);
     return ESP_OK;
 }
+#endif 
