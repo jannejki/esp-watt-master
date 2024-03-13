@@ -1,6 +1,7 @@
+#pragma once
 #ifndef MQTT_H
 #define MQTT_H
-
+#if 0
 #include <stddef.h>
 #include <stdint.h>
 #include <stdio.h>
@@ -20,5 +21,8 @@
 #include "lwip/sockets.h"
 #include "mqtt_client.h"
 #include "nvs_flash.h"
-void mqtt_app_start(void);
+#endif
+#include "objects/Wifi.h"
+
+void mqtt_app_start(Wifi* wifi);
 #endif // MQTT_H

@@ -239,11 +239,27 @@
 
     const showConnectedInfo = (wlan) => {
         let span = document.getElementById('connected');
-        span.innerHTML = `Yhdistetty verkkoon: ${wlan.ssid}<br>IP-osoite: ${wlan.ipaddress}`;
+        span.innerHTML = `Yhdistetty verkkoon: ${wlan.ssid}
+        <br>IP-osoite: ${wlan.ipaddress}
+        <br><br>Käynnistä laite uudelleen yhdistääksesi uuteen verkkoon.
+        <br><br><button onclick="sendRestart(this)">Käynnistä uudelleen</button><br>`;
         span.style.display = 'block';
         document.getElementById('not_connected').style.display = "none";
     }
 
+    const sendRestart = async (button) => {
+        button.innerHTML = "Käynnistetään...";
+        try {
+            const rsp = await fetch("/restart", {
+                method: "POST",
+            });
+            if (rsp.status != 200) throw { status: rsp.status, response: rsp };
+            button.innerHTML = "Käynnistetään uudelleen!";
+            alert("Laite käynnistyy uudelleen viiden sekunnin kuluessa.");
+        } catch (error) {
+            alert("Jotain meni pieleen! " + error.status);
+        }
+    }
 
     const delay = async (time) => {
         return new Promise((resolve) => {
@@ -304,8 +320,8 @@
             showConnectedInfo(jsonData);
 
         } catch (error) {
-            alert(error.message + error.status);
             const data = await error.response.text();
+            alert(data);
             console.error(error);
             console.log({ data });
         } finally {

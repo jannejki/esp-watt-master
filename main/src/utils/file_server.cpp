@@ -11,22 +11,7 @@
     software is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
     CONDITIONS OF ANY KIND, either express or implied.
  */
-#if 0
-#include <dirent.h>
-#include <stdio.h>
-#include <string.h>
-#include <sys/param.h>
-#include <sys/stat.h>
-#include <sys/unistd.h>
-
-#include "esp_err.h"
-#include "esp_http_server.h"
-#include "esp_log.h"
-#include "esp_spiffs.h"
-#include "esp_vfs.h"
 #include "utils/file_serving_example_common.h"
-#include "utils/scanner.h"
-#include "utils/wifi.h"
 
  /* Max length a file path can have on storage */
 #define FILE_PATH_MAX (ESP_VFS_PATH_MAX + CONFIG_SPIFFS_OBJ_NAME_LEN)
@@ -47,7 +32,7 @@ struct file_server_data {
     char scratch[SCRATCH_BUFSIZE];
 };
 static const char* TAG = "file_server";
-
+Wifi* g_wifi;
 /* Handler to redirect incoming GET request for /index.html to /
  * This can be overridden by uploading file with same name */
 static esp_err_t index_html_get_handler(httpd_req_t* req) {
@@ -91,11 +76,11 @@ static esp_err_t http_resp_dir_html(httpd_req_t* req, const char* dirpath) {
         upload_script_size);
 
     WifiSettings settings;
-    WifiState state = getWifiState(&settings);
+    WifiState state = g_wifi->getWifiState(&settings);
 
     if (state == CONNECTED) {
         esp_netif_ip_info_t ip_info;
-        getIPInfo(&ip_info);
+        g_wifi->getIPInfo(&ip_info);
         char* ip = ip4addr_ntoa((ip4_addr_t*)&ip_info.ip);
         char response[200];  // Adjust the size according to your needs
         snprintf(response, sizeof(response),
@@ -275,15 +260,15 @@ static esp_err_t access_point_post_handler(httpd_req_t* req) {
     EventBits_t bits =
         xEventGroupWaitBits(connectionFlag, WIFI_FINISHED,
             pdFALSE, pdFALSE, WIFI_TIMEOUT + 1000 / portTICK_PERIOD_MS);
-    ESP_LOGI(TAG, "File server finished");
+    ESP_LOGI(TAG, "connecting to Wifi finished");
 
     if (bits & WIFI_CONNECTED_BIT) {
         WifiSettings settings;
-        getWifiState(&settings);
+        g_wifi->getWifiState(&settings);
 
         ESP_LOGI(TAG, "Connected to AP");
         esp_netif_ip_info_t ip_info;
-        getIPInfo(&ip_info);
+        g_wifi->getIPInfo(&ip_info);
         char* ip = ip4addr_ntoa((ip4_addr_t*)&ip_info.ip);
         char response[200];  // Adjust the size according to your needs
         snprintf(response, sizeof(response),
@@ -309,10 +294,21 @@ static esp_err_t access_point_post_handler(httpd_req_t* req) {
     httpd_resp_sendstr_chunk(req, NULL);
     return ESP_OK;
 }
-/* Function to start the file server */
-esp_err_t startHTTPServer(const char* base_path) {
-    struct file_server_data* server_data = NULL;
 
+static esp_err_t restart_command_handler(httpd_req_t* req) {
+    ESP_LOGI(TAG, "Received command to restart");
+    httpd_resp_sendstr_chunk(req, "Restarting");
+    httpd_resp_sendstr_chunk(req, NULL);
+    vTaskDelay(5000);
+    esp_restart();
+    return ESP_OK;
+}
+
+
+/* Function to start the file server */
+esp_err_t startHTTPServer(const char* base_path, Wifi* wifi) {
+    struct file_server_data* server_data = NULL;
+    g_wifi = wifi;
     if (server_data) {
         ESP_LOGE(TAG, "File server already started");
         return ESP_ERR_INVALID_STATE;
@@ -328,7 +324,7 @@ esp_err_t startHTTPServer(const char* base_path) {
 
     httpd_handle_t server = NULL;
     httpd_config_t config = HTTPD_DEFAULT_CONFIG();
-    config.stack_size = 40960;  // 8 KB stack size
+    config.stack_size = 40960;  // 40 KB stack size
 
     /* Use the URI wildcard matching function in order to
      * allow the same handler to respond to multiple different
@@ -365,9 +361,17 @@ esp_err_t startHTTPServer(const char* base_path) {
         .user_ctx = server_data  // Pass server data as context
     };
 
+    /* URI handler for uploading files to server */
+    httpd_uri_t restart_command_post = {
+        .uri = "/restart",  // Match all URIs of type /upload/path/to/file
+        .method = HTTP_POST,
+        .handler = restart_command_handler,
+        .user_ctx = server_data  // Pass server data as context
+    };
+
     httpd_register_uri_handler(server, &index);
     httpd_register_uri_handler(server, &access_points);
     httpd_register_uri_handler(server, &access_points_post);
+    httpd_register_uri_handler(server, &restart_command_post);
     return ESP_OK;
 }
-#endif 

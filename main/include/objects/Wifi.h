@@ -13,7 +13,6 @@
 #include "lwip/sys.h"
 #include "nvs_flash.h"
 #include "utils/debug.h"
-#include "utils/file_serving_example_common.h"
 #include "utils/scanner.h"
 
 #define WIFI_FINISHED           0b1000
@@ -22,7 +21,7 @@
 #define WIFI_ACTIVE_BIT         0b0001
 #define WIFI_TIMEOUT            60000
 
-#define TAG "Wifi Object"
+#define TAG_NAME "Wifi Object"
 
 #define EXAMPLE_ESP_WIFI_SSID CONFIG_ESP_WIFI_SSID
 #define EXAMPLE_ESP_WIFI_PASS CONFIG_ESP_WIFI_PASSWORD
@@ -73,6 +72,8 @@
 
 
 enum WifiState { CONNECTED = 1, CONNECTING = 0, DISCONNECTED = -1, NOT_INITIALIZED = -2 };
+
+
 class Wifi {
     WifiState wifiState = NOT_INITIALIZED;
     esp_netif_t* sta_netif = NULL;

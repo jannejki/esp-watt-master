@@ -24,7 +24,7 @@ struct mqttMessage {
 struct ledBlinkTaskParams {
     uint8_t pin;
     int delay;
-    bool *loopFinished;
+    bool* loopFinished;
 };
 
 enum relayState { on, off, noStateChange };
@@ -38,10 +38,16 @@ struct RelaySettings {
     double threshold;
 };
 
+/**
+ * @brief struct for holding new ssid and password for wifi
+ * @param ssid: new ssid where to connect
+ * @param password: new password for the ssid
+ * @param connectionFlag: event group for wifi connection. This will be used to signal the sender task that the wifi connection is finished. WIFI_FINSIHED, WIFI_CONNECTED_BIT, WIFI_WRONG_PASSWORD_BIT
+*/
 struct WifiSettings {
     String ssid;
     String password;
-    EventGroupHandle_t connectionFlag;
+    EventGroupHandle_t connectionFlag; // WIFI_FINISHED, WIFI_CONNECTED_BIT, WIFI_WRONG_PASSWORD_BIT
 };
 
 extern QueueHandle_t debugQueue;

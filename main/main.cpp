@@ -10,6 +10,12 @@ QueueHandle_t debugQueue;
 QueueHandle_t mqttQueue;
 QueueHandle_t relayQueue;
 QueueHandle_t priceQueue;
+
+/**
+ * @brief Queue for sending new wifi settings to wifi task
+ * Uses struct WifiSettings that contains new ssid, password and event group 
+ * for signaling the sender task that the wifi connection is finished
+*/
 QueueHandle_t wifiSettingsQueue;
 EventBits_t uxBits;
 

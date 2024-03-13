@@ -1,4 +1,5 @@
 #include "utils/mqtt.h"
+#if 0
 #define TAG "MQTT"
 //=======================================================================
 //======================== MQTT testing =================================
@@ -101,4 +102,9 @@ void mqtt_app_start(void) {
      * example mqtt_event_handler */
     esp_mqtt_client_register_event(client, MQTT_EVENT_ANY, mqtt_event_handler, NULL);
     esp_mqtt_client_start(client);
+}
+#endif
+
+void mqtt_app_start(Wifi* wifi) {
+
 }
