@@ -241,7 +241,7 @@
         let span = document.getElementById('connected');
         span.innerHTML = `Yhdistetty verkkoon: ${wlan.ssid}
         <br>IP-osoite: ${wlan.ipaddress}
-        <br><br>Käynnistä laite uudelleen yhdistääksesi uuteen verkkoon.
+        <br><br>Käynnistä laite uudelleen jatkaaksesi käyttöönottoa.
         <br><br><button onclick="sendRestart(this)">Käynnistä uudelleen</button><br>`;
         span.style.display = 'block';
         document.getElementById('not_connected').style.display = "none";
@@ -382,7 +382,7 @@
 
             row.innerHTML = `
             <td>
-                <button class="ap loader ssidButton" onclick="connect('${ap.ssid}')" id=${ap.ssid}><p>${ap.ssid}</p>
+                <button class="ap loader ssidButton" onclick="connect('${ap.ssid}')" id="${ap.ssid}"><p>${ap.ssid}</p>
                     <svg class="signalStrength" width="20px" height="20px" viewBox="0 0 24 24" fill="none">
                         <path d="M4 20V19M8 20V16M12 20V12M16 20V8" stroke="${color}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                     </svg>
