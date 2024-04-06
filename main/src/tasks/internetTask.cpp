@@ -119,20 +119,24 @@ void internetTask(void* params) {
     }
 
     while (1) {
+
+        // Check if mqtt is connected
         mqttFlags = xEventGroupWaitBits(mqttEventGroup, MQTT_DISCONNECTED | MQTT_CONNECTED, pdTRUE, pdFALSE, 0);
         if (mqttFlags == MQTT_DISCONNECTED) {
-            ESP_LOGI(TAG, "MQTT disconnected, starting ledTask");
-            digitalWrite(greenLed, LOW);
-            xTaskCreate(
-                ledBlinkTask,       /* Function that implements the task. */
-                "MQTT_LED",          /* Text name for the task. */
-                4096,      /* Stack size in words, not bytes. */
-                (void*)&ledParams,    /* Parameter passed into the task. */
-                tskIDLE_PRIORITY,/* Priority at which the task is created. */
-                &ledTask);      /* Used to pass out the created task's handle. */
+            
+            if (ledTask == NULL) {
+                digitalWrite(greenLed, LOW);
+                xTaskCreate(
+                    ledBlinkTask,       /* Function that implements the task. */
+                    "MQTT_LED",          /* Text name for the task. */
+                    4096,      /* Stack size in words, not bytes. */
+                    (void*)&ledParams,    /* Parameter passed into the task. */
+                    tskIDLE_PRIORITY,/* Priority at which the task is created. */
+                    &ledTask);      /* Used to pass out the created task's handle. */
+            }
         }
+
         else if (mqttFlags == MQTT_CONNECTED) {
-            ESP_LOGI(TAG, "MQTT connected, deleting ledTask and turning on green led");
             if (ledTask != NULL) {
                 ledTaskFinished = true;
                 vTaskDelete(ledTask);
@@ -140,26 +144,32 @@ void internetTask(void* params) {
             }
             digitalWrite(greenLed, HIGH);
         }
-        vTaskDelay(1000);
-    }
 
-#if 0   // This is for the future, now testing the MQTT before implementing this to the MQTT
-    while (1) {
+        // Check if wifi is in trouble
         wifiState = wifi.getWifiState(&settings);
         if (wifiState == DISCONNECTED) {
             ESP_LOGI(TAG, "Wifi in trouble! restarting...");
             esp_restart();
         }
         else if (wifiState == CONNECTING) {
-            ESP_LOGI(TAG, "Yrittää yhdistää wifiin...");
+            if(ledTask == NULL || ledParams.pin == greenLed) {
+                vTaskDelete(ledTask);
+                ledTask = NULL;
+                ledParams.pin = yellowLed;
+                xTaskCreate(
+                    ledBlinkTask,       /* Function that implements the task. */
+                    "WIFI_LED",          /* Text name for the task. */
+                    4096,      /* Stack size in words, not bytes. */
+                    (void*)&ledParams,    /* Parameter passed into the task. */
+                    tskIDLE_PRIORITY,/* Priority at which the task is created. */
+                    &ledTask);      /* Used to pass out the created task's handle. */
+            }
+            
+            ESP_LOGI(TAG, "Wifi lost, trying to connect to wifi...");
         }
-
-
 
         vTaskDelay(1000);
     }
-#endif
-
 
 }
 

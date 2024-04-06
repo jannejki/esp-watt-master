@@ -150,3 +150,7 @@ bool mqtt_app_start(void) {
     ESP_LOGI(TAG, "RETURNING FROM MQTT START");
     return true;
 }
+
+void mqttSendData(char *topic, char *message) {
+    // TODO send data to mqtt
+}
