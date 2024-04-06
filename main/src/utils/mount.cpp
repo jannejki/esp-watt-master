@@ -33,8 +33,6 @@ static const char* TAG = "example_mount";
 
 /* Function to initialize SPIFFS */
 esp_err_t mountHTMLStorage(const char* base_path) {
-    ESP_LOGI(TAG, "Initializing SPIFFS");
-
     esp_vfs_spiffs_conf_t conf = {
         .base_path = base_path,
         .partition_label = NULL,
@@ -63,6 +61,5 @@ esp_err_t mountHTMLStorage(const char* base_path) {
         return ret;
     }
 
-    ESP_LOGI(TAG, "Partition size: total: %d, used: %d", total, used);
     return ESP_OK;
 }

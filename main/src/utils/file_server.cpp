@@ -103,7 +103,7 @@ static esp_err_t http_resp_dir_html(httpd_req_t* req, const char* dirpath) {
     httpd_resp_sendstr_chunk(req, "</html>");
     /* Send empty chunk to signal HTTP response completion */
     ESP_ERROR_CHECK(httpd_resp_sendstr_chunk(req, NULL));
-    ESP_LOGI(TAG, "File list sent successfully");
+
     return ESP_OK;
 }
 
@@ -178,13 +178,13 @@ static esp_err_t index_handler(httpd_req_t* req) {
 
     /* If name has trailing '/', respond with directory contents */
     if (filename[strlen(filename) - 1] == '/') {
-        ESP_LOGI(TAG, "Responding with directory contents");
+        ESP_LOGI(TAG, "Sending HTML page");
         return http_resp_dir_html(req, filepath);
     }
     else {
         // return 404
         // LOG the filename to ESP_LOG
-        ESP_LOGI(TAG, "File name: %s", filename);
+        ESP_LOGW(TAG, "File name: \'%s\' not found from filesystem", filename);
         return httpd_resp_send_err(req, HTTPD_404_NOT_FOUND, "File not found");
     }
 }
@@ -201,7 +201,6 @@ static esp_err_t access_points_handler(httpd_req_t* req) {
     int maxAmount = amount > 10 ? DEFAULT_SCAN_LIST_SIZE : amount;
 
     for (int i = 0; i < maxAmount; i++) {
-        ESP_LOGI(TAG, "SSID: %s", found_ssids[i].ssid);
         if (strcmp((char*)found_ssids[i].ssid, "") != 0) {
             char buff[128];
             sprintf(buff, "%s:%d;", found_ssids[i].ssid, found_ssids[i].rssi);
@@ -209,18 +208,14 @@ static esp_err_t access_points_handler(httpd_req_t* req) {
         }
     }
 
-    ESP_LOGI(TAG, "Finished wifi scanning");
     free(found_ssids);
     /* Send empty chunk to signal HTTP response completion */
     ESP_ERROR_CHECK(httpd_resp_sendstr_chunk(req, NULL));
-    ESP_LOGI(TAG, "File list sent successfully");
     return ESP_OK;
 }
 
 /* Handler to download a file kept on the server */
 static esp_err_t access_point_post_handler(httpd_req_t* req) {
-    ESP_LOGI(TAG, "content-length: %d", req->content_len);
-
     int remaining = req->content_len;
     /* Allocate buffer to hold the received data */
     char buf[req->content_len + 1];  // +1 for null terminator
@@ -228,8 +223,6 @@ static esp_err_t access_point_post_handler(httpd_req_t* req) {
     int index = 0;  // Index to keep track of buffer position
 
     while (remaining > 0) {
-        ESP_LOGI(TAG, "Remaining size : %d", remaining);
-        /* Receive the body part by part into a buffer */
         if ((received = httpd_req_recv(req, buf + index,
             MIN(remaining, SCRATCH_BUFSIZE))) <= 0) {
             if (received == HTTPD_SOCK_ERR_TIMEOUT) {
@@ -260,13 +253,11 @@ static esp_err_t access_point_post_handler(httpd_req_t* req) {
     EventBits_t bits =
         xEventGroupWaitBits(connectionFlag, WIFI_FINISHED,
             pdFALSE, pdFALSE, WIFI_TIMEOUT + 1000 / portTICK_PERIOD_MS);
-    ESP_LOGI(TAG, "connecting to Wifi finished");
 
     if (bits & WIFI_CONNECTED_BIT) {
         WifiSettings settings;
         g_wifi->getWifiState(&settings);
 
-        ESP_LOGI(TAG, "Connected to AP");
         esp_netif_ip_info_t ip_info;
         g_wifi->getIPInfo(&ip_info);
         char* ip = ip4addr_ntoa((ip4_addr_t*)&ip_info.ip);
@@ -280,12 +271,12 @@ static esp_err_t access_point_post_handler(httpd_req_t* req) {
     }
     else {
         if (bits & WIFI_WRONG_PASSWORD_BIT) {
-            ESP_LOGI(TAG, "Wrong password");
             httpd_resp_set_status(req, "401");
             httpd_resp_sendstr_chunk(req, "Wrong password");
         }
+
+        // Something else went wrong
         else {
-            ESP_LOGI(TAG, "Failed to connect to AP");
             httpd_resp_set_status(req, "500");
             httpd_resp_sendstr_chunk(req, "Failed to connect to AP");
         }

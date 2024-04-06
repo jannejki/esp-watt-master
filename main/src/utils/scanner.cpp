@@ -25,8 +25,6 @@ int wifi_scan(wifi_ap_record_t* ap_info) {
 
     ESP_ERROR_CHECK(esp_wifi_scan_get_ap_num(&ap_count));
     ESP_ERROR_CHECK(esp_wifi_scan_get_ap_records(&number, ap_info));
-    ESP_LOGI(TAG, "Total APs scanned = %u", ap_count);
-
 
     // stop wifi scan
     esp_err_t result = esp_wifi_scan_stop();
@@ -34,7 +32,7 @@ int wifi_scan(wifi_ap_record_t* ap_info) {
         ESP_LOGE(TAG, "Failed to stop wifi scan");
         
     } else {
-        ESP_LOGI(TAG, "Wifi scan stopped");
+        ESP_LOGD(TAG, "Wifi scan stopped");
     }
 
     return ap_count;

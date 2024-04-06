@@ -11,14 +11,10 @@ static void wifi_event_handler(void* arg, esp_event_base_t event_base,
     if (event_id == WIFI_EVENT_AP_STACONNECTED) {
         wifi_event_ap_staconnected_t* event =
             (wifi_event_ap_staconnected_t*)event_data;
-        ESP_LOGI(TAG_NAME, "station " MACSTR " join, AID=%d", MAC2STR(event->mac),
-            event->aid);
     }
     else if (event_id == WIFI_EVENT_AP_STADISCONNECTED) {
         wifi_event_ap_stadisconnected_t* event =
             (wifi_event_ap_stadisconnected_t*)event_data;
-        ESP_LOGI(TAG_NAME, "station " MACSTR " leave, AID=%d", MAC2STR(event->mac),
-            event->aid);
     }
 }
 
@@ -30,25 +26,24 @@ static void wifiStationEventHandler(void* arg, esp_event_base_t event_base, int3
         event_id == WIFI_EVENT_STA_DISCONNECTED) {
 
         wifi_event_sta_disconnected_t* eventData = (wifi_event_sta_disconnected_t*)event_data;
-        ESP_LOGI(TAG_NAME, "Disconnected from AP. Reason: %d", eventData->reason);
+        ESP_LOGW(TAG_NAME, "Disconnected from AP. Reason: %d", eventData->reason);
         if (eventData->reason == 15) xEventGroupSetBits(s_wifi_event_group, WIFI_WRONG_PASSWORD_BIT);
 
         if (s_retry_num < EXAMPLE_ESP_MAXIMUM_RETRY) {
             esp_wifi_connect();
             s_retry_num++;
-            ESP_LOGI(TAG_NAME,
-                "Could not connect to access point. Retry %d/%d...\n\r",
+            ESP_LOGW(TAG_NAME,
+                "Could not connect to access point. Retry %d/%d...",
                 s_retry_num, EXAMPLE_ESP_MAXIMUM_RETRY);
         }
         else {
             xEventGroupSetBits(s_wifi_event_group, WIFI_FINISHED);
-            ESP_LOGI(TAG_NAME, "connect to the AP fail");
+            ESP_LOGW(TAG_NAME, "connect to the AP fail");
         }
     }
     else if (event_base == IP_EVENT && event_id == IP_EVENT_STA_GOT_IP) {
         ip_event_got_ip_t* event = (ip_event_got_ip_t*)event_data;
         s_retry_num = 0;
-        ESP_LOGI(TAG_NAME, "got ip");
         xEventGroupClearBits(s_wifi_event_group, WIFI_WRONG_PASSWORD_BIT);
         xEventGroupSetBits(s_wifi_event_group, WIFI_CONNECTED_BIT | WIFI_FINISHED);
     }
@@ -69,7 +64,6 @@ Wifi::Wifi() {
 
     wifi_init_config_t cfg = WIFI_INIT_CONFIG_DEFAULT();
     ESP_ERROR_CHECK(esp_wifi_init(&cfg));
-    ESP_LOGI(TAG_NAME, "Wifi initialized");
 }
 
 Wifi::~Wifi() {
@@ -138,7 +132,7 @@ void Wifi::mode(wifi_mode_t mode) {
             esp_wifi_set_mode(mode);
             ESP_ERROR_CHECK(esp_wifi_set_config(WIFI_IF_AP, &wifi_config));
 
-            ESP_LOGI(TAG_NAME, "Wifi access point started!");
+            ESP_LOGI(TAG_NAME, "Wifi access point started! SSID: %s password: %s\n\r", EXAMPLE_ESP_WIFI_SSID, EXAMPLE_ESP_WIFI_PASS);
         }
         else {
             esp_wifi_disconnect();
@@ -199,7 +193,6 @@ WifiState Wifi::connectToWifi(String& ssid, String& password) {
     // If Wifi is connected, then it must be disconnected before connecting to new one
     if (wifiState == CONNECTED) {
         // Disconnect from the current WiFi network
-        ESP_LOGI(TAG_NAME, "Disconnecting from current network");
         esp_wifi_disconnect();
         wifiState = DISCONNECTED;
     }
@@ -214,22 +207,22 @@ WifiState Wifi::connectToWifi(String& ssid, String& password) {
         ESP_LOGI(TAG_NAME, "Connecting to SSID: %s password: %s\n\r", ssid.c_str(), password.c_str());
     }
     else if (connecting == ESP_ERR_WIFI_NOT_INIT) {
-        ESP_LOGI(TAG_NAME, "Wifi not initialized");
+        ESP_LOGW(TAG_NAME, "Wifi not initialized");
         return NOT_INITIALIZED;
     }
     else if (connecting == ESP_ERR_WIFI_NOT_STARTED) {
-        ESP_LOGI(TAG_NAME, "Wifi not started");
+        ESP_LOGW(TAG_NAME, "Wifi not started");
         return NOT_INITIALIZED;
     }
     else if (connecting == ESP_ERR_WIFI_CONN) {
-        ESP_LOGI(TAG_NAME, "Wifi connection error");
+        ESP_LOGW(TAG_NAME, "Wifi connection error");
     }
     else if (connecting == ESP_ERR_WIFI_SSID) {
-        ESP_LOGI(TAG_NAME, "SSID not found");
+        ESP_LOGW(TAG_NAME, "Wifi SSID not found");
         return DISCONNECTED;
     }
     else {
-        ESP_LOGI(TAG_NAME, "Unknown error");
+        ESP_LOGW(TAG_NAME, "Unknown Wifi error");
         return NOT_INITIALIZED;
     }
 
@@ -238,17 +231,16 @@ WifiState Wifi::connectToWifi(String& ssid, String& password) {
         s_wifi_event_group, WIFI_FINISHED, pdFALSE,
         pdFALSE, WIFI_TIMEOUT / portTICK_PERIOD_MS);
 
-    ESP_LOGI(TAG_NAME, "Bits: %d", (uint8_t)bits);
     if (bits & WIFI_CONNECTED_BIT) {
         ESP_LOGI(TAG_NAME, "Connected to SSID: %s\n\r", ssid.c_str());
         wifiState = CONNECTED;
     }
     else if (bits & WIFI_WRONG_PASSWORD_BIT) {
-        ESP_LOGI(TAG_NAME, "Wrong password for SSID: %s\n\r", ssid.c_str());
+        ESP_LOGE(TAG_NAME, "Wrong password for SSID: %s\n\r", ssid.c_str());
         wifiState = DISCONNECTED;
     }
     else {
-        ESP_LOGI(TAG_NAME, "Failed to connect to SSID: %s password: %s\n\r", ssid.c_str(), password.c_str());
+        ESP_LOGE(TAG_NAME, "Failed to connect to SSID: %s password: %s\n\r", ssid.c_str(), password.c_str());
         wifiState = DISCONNECTED;
     }
 

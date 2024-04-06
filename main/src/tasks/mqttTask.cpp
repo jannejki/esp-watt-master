@@ -14,9 +14,6 @@ void mqttTask(void* params) {
 
     while (1) {
         if (xQueueReceive(mqttReceiveQueue, &mqtt, portMAX_DELAY)) {
-            ESP_LOGI("mqttTask", "topic: %s", mqtt.topic);
-            ESP_LOGI("mqttTask", "message: %s", mqtt.message);
-
             std::vector<String> commands = splitMQTTMessageToCommands(mqtt.message);
 
             if (strcmp(mqtt.topic, MQTT_DEVICE_COMMAND_TOPIC) == 0) {

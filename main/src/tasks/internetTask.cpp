@@ -79,7 +79,6 @@ void internetTask(void* params) {
 
         /* Start the file server */
         ESP_ERROR_CHECK(startHTTPServer(base_path, &wifi));
-        ESP_LOGI(TAG, "File server started");
 
         // for ever while loop to wait for new wifi settings, after successful connection, user must restart the device 
         while (1) {
@@ -149,7 +148,7 @@ void internetTask(void* params) {
         // Check if wifi is in trouble
         wifiState = wifi.getWifiState(&settings);
         if (wifiState == DISCONNECTED) {
-            ESP_LOGI(TAG, "Wifi in trouble! restarting...");
+            ESP_LOGE(TAG, "Wifi in trouble! restarting ESP32...");
             esp_restart();
         }
         else if (wifiState == CONNECTING) {
@@ -166,7 +165,7 @@ void internetTask(void* params) {
                     &ledTask);      /* Used to pass out the created task's handle. */
             }
 
-            ESP_LOGI(TAG, "Wifi lost, trying to connect to wifi...");
+            ESP_LOGW(TAG, "Wifi lost, trying to connect to wifi...");
         }
 
         if (xQueueReceive(mqttTransmitQueue, &mqttTransmitMessage, 0) == pdTRUE) {

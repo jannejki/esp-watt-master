@@ -2,7 +2,7 @@
 #define MAIN_H
 
 #include <Arduino.h>
-
+#include "esp_log.h"
 #define DEVICE_ID CONFIG_DEVICE_ID
 #define MQTT_DEVICE_COMMAND_TOPIC CONFIG_MQTT_DEVICE_TOPIC_BASE "/" DEVICE_ID "/command"
 #define MQTT_DEVICE_STATUS_TOPIC CONFIG_MQTT_DEVICE_TOPIC_BASE "/" DEVICE_ID "/status"

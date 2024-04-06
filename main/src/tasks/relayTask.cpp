@@ -3,7 +3,6 @@
 void updateElectricPrices(double* price, Relay* relays, uint8_t amountOfRelays);
 
 void relayTask(void* params) {
-    ESP_LOGI("relayTask", "Creating array for %d relays", CONFIG_AMOUNT_OF_RELAYS);
     Relay* relays = new Relay[(uint8_t)CONFIG_AMOUNT_OF_RELAYS];
 
     relays[0].initialize(LED0, 0);
@@ -54,7 +53,7 @@ void relayTask(void* params) {
 
             // Sending status to debug queue
             char* relayStatus = relays[relaySettings.relayNumber].status();
-            ESP_LOGI("relayTask", "%s", relayStatus);
+            ESP_LOGI("Relay", "%s", relayStatus);
             mqttMessage mqttTransmitMessage;
             sprintf(mqttTransmitMessage.topic, "%s", MQTT_DEVICE_STATUS_TOPIC);
             sprintf(mqttTransmitMessage.message, "%s", relayStatus);
@@ -77,7 +76,7 @@ void updateElectricPrices(double* price, Relay* relays, uint8_t amountOfRelays) 
         relays[i].updatePrice(price[0]);
         // Sending status to debug queue
         char* relayStatus = relays[i].status();
-        ESP_LOGI("relayTask", "%s", relayStatus);
+        ESP_LOGI("Relay", "%s", relayStatus);
         sprintf(mqttTransmitMessage.topic, "%s", MQTT_DEVICE_STATUS_TOPIC);
         sprintf(mqttTransmitMessage.message, "%s", relayStatus);
 
