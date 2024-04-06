@@ -52,10 +52,10 @@ void relayTask(void *params) {
             relays[relaySettings.relayNumber].changeMode(mode);
 
             // Sending status to debug queue
-            String relayStatus = relays[relaySettings.relayNumber].status();
+            char *relayStatus = relays[relaySettings.relayNumber].status();
 
             sprintf(debugMessage.message, "Relay %d: %s",
-                    relaySettings.relayNumber, relayStatus.c_str());
+                    relaySettings.relayNumber, relayStatus);
 
             debugMessage.sender = "relay task";
             xQueueSend(debugQueue, &debugMessage, 100);

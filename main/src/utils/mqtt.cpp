@@ -1,6 +1,15 @@
 #include "utils/mqtt.h"
-#if 0
 #define TAG "MQTT"
+bool mqttConnected = false;
+
+void subscribeToTopics(esp_mqtt_client_handle_t client) {
+    ESP_LOGI(TAG, "Subscribing to topics: %s", MQTT_DEVICE_TOPIC);
+    esp_mqtt_client_subscribe(client, (const char*)MQTT_DEVICE_TOPIC, 0);
+    ESP_LOGI(TAG, "Subscribing to topics: %s", "electric/price");
+    esp_mqtt_client_subscribe(client, "electric/price", 0);
+}
+
+esp_mqtt_client_handle_t client;
 //=======================================================================
 //======================== MQTT testing =================================
 //=======================================================================
@@ -22,45 +31,49 @@ static void log_error_if_nonzero(const char* message, int error_code)
  */
 static void mqtt_event_handler(void* handler_args, esp_event_base_t base, int32_t event_id, void* event_data)
 {
+  //  xEventGroupClearBits(mqttEventGroup, MQTT_DISCONNECTED | MQTT_CONNECTED);
     ESP_LOGD(TAG, "Event dispatched from event loop base=%s, event_id=%" PRIi32 "", base, event_id);
     esp_mqtt_event_handle_t event = static_cast<esp_mqtt_event_handle_t>(event_data);
     esp_mqtt_client_handle_t client = event->client;
     int msg_id;
+    mqttMessage mqtt;
+
     switch ((esp_mqtt_event_id_t)event_id) {
     case MQTT_EVENT_CONNECTED:
         ESP_LOGI(TAG, "MQTT_EVENT_CONNECTED");
-        msg_id = esp_mqtt_client_publish(client, "/topic/qos1", "data_3", 0, 1, 0);
-        ESP_LOGI(TAG, "sent publish successful, msg_id=%d", msg_id);
-
-        msg_id = esp_mqtt_client_subscribe(client, "/topic/qos0", 0);
-        ESP_LOGI(TAG, "sent subscribe successful, msg_id=%d", msg_id);
-
-        msg_id = esp_mqtt_client_subscribe(client, "/topic/qos1", 1);
-        ESP_LOGI(TAG, "sent subscribe successful, msg_id=%d", msg_id);
-
-        msg_id = esp_mqtt_client_unsubscribe(client, "/topic/qos1");
-        ESP_LOGI(TAG, "sent unsubscribe successful, msg_id=%d", msg_id);
+        subscribeToTopics(client);
+        mqttConnected = true;
+        xEventGroupSetBits(mqttEventGroup, MQTT_CONNECTED);
         break;
+
     case MQTT_EVENT_DISCONNECTED:
         ESP_LOGI(TAG, "MQTT_EVENT_DISCONNECTED");
+        mqttConnected = false;
+        xEventGroupSetBits(mqttEventGroup, MQTT_DISCONNECTED);
         break;
 
     case MQTT_EVENT_SUBSCRIBED:
         ESP_LOGI(TAG, "MQTT_EVENT_SUBSCRIBED, msg_id=%d", event->msg_id);
-        msg_id = esp_mqtt_client_publish(client, "/topic/qos0", "data", 0, 0, 0);
-        ESP_LOGI(TAG, "sent publish successful, msg_id=%d", msg_id);
         break;
+
     case MQTT_EVENT_UNSUBSCRIBED:
         ESP_LOGI(TAG, "MQTT_EVENT_UNSUBSCRIBED, msg_id=%d", event->msg_id);
         break;
+
     case MQTT_EVENT_PUBLISHED:
         ESP_LOGI(TAG, "MQTT_EVENT_PUBLISHED, msg_id=%d", event->msg_id);
         break;
+
     case MQTT_EVENT_DATA:
         ESP_LOGI(TAG, "MQTT_EVENT_DATA");
-        printf("TOPIC=%.*s\r\n", event->topic_len, event->topic);
-        printf("DATA=%.*s\r\n", event->data_len, event->data);
+        ESP_LOGI(TAG, "TOPIC=%.*s\r\n", event->topic_len, event->topic);
+        ESP_LOGI(TAG, "DATA=%.*s\r\n", event->data_len, event->data);
+
+        sprintf(mqtt.message, "%.*s", event->data_len, event->data);
+        sprintf(mqtt.topic, "%.*s", event->topic_len, event->topic);
+        xQueueSend(mqttQueue, &mqtt, 0);
         break;
+
     case MQTT_EVENT_ERROR:
         ESP_LOGI(TAG, "MQTT_EVENT_ERROR");
         if (event->error_handle->error_type == MQTT_ERROR_TYPE_TCP_TRANSPORT) {
@@ -77,8 +90,7 @@ static void mqtt_event_handler(void* handler_args, esp_event_base_t base, int32_
     }
 }
 
-#define CONFIG_BROKER_URL "mqtt://192.168.1.212:1883"
-void mqtt_app_start(void) {
+bool mqtt_app_start(void) {
 
     esp_log_level_set("*", ESP_LOG_INFO);
     esp_log_level_set("mqtt_client", ESP_LOG_VERBOSE);
@@ -87,14 +99,37 @@ void mqtt_app_start(void) {
     esp_log_level_set("esp-tls", ESP_LOG_VERBOSE);
     esp_log_level_set("TRANSPORT", ESP_LOG_VERBOSE);
     esp_log_level_set("outbox", ESP_LOG_VERBOSE);
+
     esp_mqtt_client_config_t mqtt_cfg = {};
+    char mqttAddress[128]; // Adjust the size according to your URI length
 
-    mqtt_cfg.broker.address.uri = CONFIG_BROKER_URL;
+    snprintf(mqttAddress, sizeof(mqttAddress), "mqtt://%s:%s", MQTT_BROKER_URL, MQTT_BROKER_PORT);
+    mqtt_cfg.broker.address.uri = mqttAddress;
 
+    // MQTT buffer configuration
+    esp_mqtt_client_config_t::buffer_t buffer_config = {}; // Create an instance of buffer_t struct
+    buffer_config.size = 2048; // Set the members of the buffer_t struct
+    buffer_config.out_size = 2048;
+    mqtt_cfg.buffer = buffer_config; // Assign the buffer_t struct instance to the buffer_t member of the mqtt_cf
+
+    // MQTT task configuration
+    esp_mqtt_client_config_t::task_t taskConfig = {};
+    taskConfig.stack_size = 4096;
+    taskConfig.priority = 5;
+    mqtt_cfg.task = taskConfig;
+
+    // MQTT client configuration
+    esp_mqtt_client_config_t::credentials_t credentials = {};
+    credentials.username = DEVICE_ID;
+    esp_mqtt_client_config_t::credentials_t::authentication_t auth = {};
+    auth.password = MQTT_PASSWORD;
+
+    credentials.authentication = auth;
+    mqtt_cfg.credentials = credentials;
 
     //client->config->path
     ESP_LOGI(TAG, "Broker url: %s", mqtt_cfg.broker.address.uri);
-    esp_mqtt_client_handle_t client = esp_mqtt_client_init(&mqtt_cfg);
+    client = esp_mqtt_client_init(&mqtt_cfg);
     if (client == NULL) {
         ESP_LOGE("MQTT", "Failed to initialize client");
     }
@@ -102,9 +137,10 @@ void mqtt_app_start(void) {
      * example mqtt_event_handler */
     esp_mqtt_client_register_event(client, MQTT_EVENT_ANY, mqtt_event_handler, NULL);
     esp_mqtt_client_start(client);
-}
-#endif
 
-void mqtt_app_start(Wifi* wifi) {
+    while (!mqttConnected) {
+        vTaskDelay(50 / portTICK_PERIOD_MS);
+    }
 
+    return true;
 }

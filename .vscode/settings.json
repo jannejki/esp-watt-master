@@ -21,7 +21,12 @@
         "system_error": "cpp",
         "sstream": "cpp",
         "list": "cpp",
-        "string": "cpp"
+        "string": "cpp",
+        "array": "cpp",
+        "bitset": "cpp",
+        "string_view": "cpp",
+        "initializer_list": "cpp",
+        "regex": "cpp"
     },
     "C_Cpp.errorSquiggles": "disabled"
 }

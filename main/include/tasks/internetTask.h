@@ -22,6 +22,7 @@
 #include "objects/Wifi.h"
 #include "tasks/ledBlinkTask.h"
 #include "utils/file_serving_example_common.h"
+#include "utils/mqtt.h"
 
 #define WIFI_SETTINGS_NAMESPACE "wifi"
 #define WIFI_SETTINGS_SSID_KEY "ssid"

@@ -42,7 +42,6 @@ static void wifiStationEventHandler(void* arg, esp_event_base_t event_base, int3
         }
         else {
             xEventGroupSetBits(s_wifi_event_group, WIFI_FINISHED);
-            s_retry_num = 0;
             ESP_LOGI(TAG_NAME, "connect to the AP fail");
         }
     }
@@ -175,6 +174,7 @@ esp_err_t Wifi::changeStationSettings(String& ssid, String& password) {
  * @returns WifiState -  CONNECTED = 1, CONNECTING = 0, DISCONNECTED = -1, NOT_INITIALIZED = -2
 */
 WifiState Wifi::connectToWifi(String& ssid, String& password) {
+    s_retry_num = 0;
     // If event group is null, then this is the first time trying to connect to Access Point
     if (s_wifi_event_group == NULL) {
         // If the event group hasn't been created yet, create it
@@ -205,7 +205,33 @@ WifiState Wifi::connectToWifi(String& ssid, String& password) {
     }
 
     ESP_ERROR_CHECK(changeStationSettings(ssid, password));
-    ESP_ERROR_CHECK(esp_wifi_connect());
+
+    // This was ESP_ERROR_CHECK before, but it caused random crashes on startup, then after couple restarts, it just works fine.
+    // I inserted the if else statements to check the return value of the function and but now this works fine all the time apparently.
+    esp_err_t connecting = esp_wifi_connect();
+
+    if (connecting == ESP_OK) {
+        ESP_LOGI(TAG_NAME, "Connecting to SSID: %s password: %s\n\r", ssid.c_str(), password.c_str());
+    }
+    else if (connecting == ESP_ERR_WIFI_NOT_INIT) {
+        ESP_LOGI(TAG_NAME, "Wifi not initialized");
+        return NOT_INITIALIZED;
+    }
+    else if (connecting == ESP_ERR_WIFI_NOT_STARTED) {
+        ESP_LOGI(TAG_NAME, "Wifi not started");
+        return NOT_INITIALIZED;
+    }
+    else if (connecting == ESP_ERR_WIFI_CONN) {
+        ESP_LOGI(TAG_NAME, "Wifi connection error");
+    }
+    else if (connecting == ESP_ERR_WIFI_SSID) {
+        ESP_LOGI(TAG_NAME, "SSID not found");
+        return DISCONNECTED;
+    }
+    else {
+        ESP_LOGI(TAG_NAME, "Unknown error");
+        return NOT_INITIALIZED;
+    }
 
     // Waiting for the wifiStationEventHandler to set the WIFI_CONNECTED_BIT or WIFI_FAIL_BIT
     EventBits_t bits = xEventGroupWaitBits(
@@ -242,10 +268,19 @@ WifiState Wifi::getWifiState(WifiSettings* settings) {
 
     ret = esp_wifi_sta_get_ap_info(&ap_info);
 
+    // if ret == ESP_OK or the ESP is still trying to connect to the AP, then nothing to worry. 
+    // If it has tried to connected maximum times and failed, then return DISCONNECTED
+
     if (ret == ESP_OK) {
         // ESP32 is connected to an AP
         wifiState = CONNECTED;
     }
+
+    else if (s_retry_num < EXAMPLE_ESP_MAXIMUM_RETRY) {
+        // ESP32 is trying to connect to an AP
+        wifiState = CONNECTING;
+    }
+
     else {
         // ESP32 is not connected to an AP
         wifiState = DISCONNECTED;

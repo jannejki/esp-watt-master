@@ -1,26 +1,25 @@
 #include "tasks/mqttTask.h"
 
-std::vector<String> splitMQTTMessageToCommands(String input);
+std::vector<String> splitMQTTMessageToCommands(char* input);
 std::vector<String> splitMQTTCommandsToParams(String input);
 
 RelaySettings parseMqttRelaySettings(std::vector<String> tokens);
 
-void parseMqttElectricPriceMessage(std::vector<String> tokens, double *prices);
+void parseMqttElectricPriceMessage(std::vector<String> tokens, double* prices);
 
-void mqttTask(void *params) {
+void mqttTask(void* params) {
     mqttMessage mqtt;
     DebugMessage debugMessage;
     debugMessage.sender = "mqttTask";
 
     while (1) {
         if (xQueueReceive(mqttQueue, &mqtt, portMAX_DELAY)) {
-            debugMessage.tick = xTaskGetTickCount();
-            xQueueSend(debugQueue, &debugMessage, 0);
+            ESP_LOGI("mqttTask", "topic: %s", mqtt.topic);
+            ESP_LOGI("mqttTask", "message: %s", mqtt.message);
 
-            std::vector<String> commands =
-                splitMQTTMessageToCommands(mqtt.message);
+            std::vector<String> commands = splitMQTTMessageToCommands(mqtt.message);
 
-            if (mqtt.topic == "relay") {
+            if (strcmp(mqtt.topic, MQTT_DEVICE_TOPIC) == 0) {
                 RelaySettings relay = parseMqttRelaySettings(commands);
 
                 if (relay.relayNumber == -1) {
@@ -30,23 +29,28 @@ void mqttTask(void *params) {
                     Serial.println(relay.relayNumber);
                     Serial.print("message: ");
                     Serial.println(mqtt.message);
-                } else {
+                }
+                else {
                     xQueueSend(relayQueue, &relay, (TickType_t)100);
                 }
-            } else if (mqtt.topic == "electric/price") {
-                double prices[6] = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
+            }
+            else if (strcmp(mqtt.topic, "electric/price") == 0) {
+                double prices[6] = { 0.0, 0.0, 0.0, 0.0, 0.0, 0.0 };
                 parseMqttElectricPriceMessage(commands, prices);
                 xQueueSend(priceQueue, &prices, (TickType_t)100);
-            } else {
+            }
+            else {
                 Serial.println("topic: ei tunneta");
             }
+
         }
     }
 }
 
-std::vector<String> splitMQTTMessageToCommands(String input) {
+std::vector<String> splitMQTTMessageToCommands(char* rawInput) {
     std::vector<String> tokens;
-
+    // convert char* to string
+    String input = String(rawInput);
     int pos = 0;
     while ((pos = input.indexOf('&')) != -1) {
         tokens.push_back(input.substring(0, pos));
@@ -93,36 +97,44 @@ struct RelaySettings parseMqttRelaySettings(std::vector<String> tokens) {
             // convert params[1] to int
             relayNumber = params[1].toInt();
 
-        } else if (params[0] == "mode") {
+        }
+        else if (params[0] == "mode") {
             if (params[1] == "auto") {
                 mode = automatic;
-            } else if (params[1] == "manual") {
+            }
+            else if (params[1] == "manual") {
                 mode = manual;
-            } else {
+            }
+            else {
 
                 sprintf(debug.message, "mode='%s' is not acceptable!",
-                        params[1].c_str());
+                    params[1].c_str());
                 xQueueSend(debugQueue, &debug, (TickType_t)100);
             }
 
-        } else if (params[0] == "state") {
+        }
+        else if (params[0] == "state") {
             if (params[1] == "on") {
                 state = on;
-            } else if (params[1] == "off") {
+            }
+            else if (params[1] == "off") {
                 state = off;
-            } else {
+            }
+            else {
                 sprintf(debug.message, "state='%s' is not acceptable!",
-                        params[1].c_str());
+                    params[1].c_str());
 
                 xQueueSend(debugQueue, &debug, (TickType_t)100);
             }
 
-        } else if (params[0] == "threshold") {
+        }
+        else if (params[0] == "threshold") {
             threshold = params[1].toDouble();
 
-        } else {
+        }
+        else {
             sprintf(debug.message, "Unknown command: '%s'.", params[0].c_str());
-   
+
             xQueueSend(debugQueue, &debug, (TickType_t)100);
         }
     }
@@ -135,25 +147,30 @@ struct RelaySettings parseMqttRelaySettings(std::vector<String> tokens) {
     return relaySettings;
 }
 
-void parseMqttElectricPriceMessage(std::vector<String> tokens, double *prices) {
+void parseMqttElectricPriceMessage(std::vector<String> tokens, double* prices) {
     DebugMessage debug;
 
     for (size_t i = 0; i < tokens.size(); ++i) {
         std::vector<String> params = splitMQTTCommandsToParams(tokens[i]);
         sprintf(debug.message, "params[0] = %s, params[1] = %s",
-                params[0].c_str(), params[1].c_str());
+            params[0].c_str(), params[1].c_str());
         xQueueSend(debugQueue, &debug, (TickType_t)100);
         if (params[0] == "hour0") {
             prices[0] = params[1].toDouble();
-        } else if (params[0] == "hour1") {
+        }
+        else if (params[0] == "hour1") {
             prices[1] = params[1].toDouble();
-        } else if (params[0] == "hour2") {
+        }
+        else if (params[0] == "hour2") {
             prices[2] = params[1].toDouble();
-        } else if (params[0] == "hour3") {
+        }
+        else if (params[0] == "hour3") {
             prices[3] = params[1].toDouble();
-        } else if (params[0] == "hour4") {
+        }
+        else if (params[0] == "hour4") {
             prices[4] = params[1].toDouble();
-        } else if (params[0] == "hour5") {
+        }
+        else if (params[0] == "hour5") {
             prices[5] = params[1].toDouble();
         }
     }

@@ -46,7 +46,7 @@ void debugTask(void* params) {
 }
 
 void debug(DebugMessage* debugMessage) {
-    if (!LOG) return;
+    ////if (!LOG) return;
 
     Serial.print(debugMessage->sender);
     Serial.print(": ");

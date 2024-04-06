@@ -13,13 +13,14 @@ QueueHandle_t priceQueue;
 
 /**
  * @brief Queue for sending new wifi settings to wifi task
- * Uses struct WifiSettings that contains new ssid, password and event group 
+ * Uses struct WifiSettings that contains new ssid, password and event group
  * for signaling the sender task that the wifi connection is finished
 */
 QueueHandle_t wifiSettingsQueue;
 EventBits_t uxBits;
 
 EventGroupHandle_t taskInitializedGroup;
+EventGroupHandle_t mqttEventGroup;
 
 extern "C" void app_main() {
     initArduino();
@@ -31,6 +32,7 @@ extern "C" void app_main() {
     wifiSettingsQueue = xQueueCreate(1, sizeof(WifiSettings));
 
     taskInitializedGroup = xEventGroupCreate();
+    mqttEventGroup = xEventGroupCreate();
 
     esp_task_wdt_deinit();
     // start tasks

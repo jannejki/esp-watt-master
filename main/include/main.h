@@ -3,6 +3,9 @@
 
 #include <Arduino.h>
 
+#define DEVICE_ID CONFIG_DEVICE_ID
+#define MQTT_DEVICE_TOPIC "device/" DEVICE_ID
+
 #define LED0 0
 #define LED1 35
 
@@ -17,8 +20,8 @@ struct DebugMessage {
 };
 
 struct mqttMessage {
-    String topic;
-    String message;
+    char topic[64];
+    char message[128];
 };
 
 struct ledBlinkTaskParams {
@@ -57,4 +60,7 @@ extern QueueHandle_t priceQueue;
 extern QueueHandle_t wifiSettingsQueue;
 
 extern EventGroupHandle_t taskInitializedGroup;
+
+extern EventGroupHandle_t mqttEventGroup;
+
 #endif  // MAIN_H

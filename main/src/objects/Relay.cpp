@@ -13,7 +13,7 @@ void Relay::initialize(int pin, int relayNumber) {
     pinMode(pin, OUTPUT);
 }
 
-String Relay::status() {
+char* Relay::status() {
     String status = "Relay: " + String(relayNumber) + ", mode: ";
     switch (mode) {
         case automatic:
@@ -35,7 +35,10 @@ String Relay::status() {
 
     status += ", priceThreshold: " + String(priceThreshold);
 
-    return status;
+    char* cstr = new char[status.length() + 1];
+    strcpy(cstr, status.c_str());
+
+    return cstr;
 }
 
 

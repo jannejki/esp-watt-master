@@ -1,4 +1,18 @@
-menu "Example Configuration"
+menu "Watt-Master configuration"
+menu "Device information"
+    config DEVICE_ID
+        string "Device ID"
+        default "Watt-Master"
+        help
+            ID of the device. Same as in the database.
+        
+        config AMOUNT_OF_RELAYS
+            int "Amount of relays on the device"
+            default 3
+            help
+                The amount of relays on the device that can be controlled.
+endmenu
+menu "WiFi configuration"
     choice ESP_WIFI_SAE_MODE
         prompt "WPA3 SAE mode selection"
         default ESP_WPA3_SAE_PWE_BOTH
@@ -74,4 +88,25 @@ menu "Example Configuration"
         default 4
         help
             Max number of the STA connects to AP.
+endmenu 
+menu "MQTT configuration"
+    config MQTT_BROKER_ADDRESS
+        string  "MQTT Broker address"
+        default "test.mosquitto.org"
+        help
+            Address of the MQTT broker. For example, 'test.mosquitto.org'.
+
+            
+    config MQTT_BROKER_PORT
+        string "MQTT Broker port"
+        default "1883"
+        help
+            Port that the mqtt broker listens to. for example, '1883'.
+
+    config MQTT_PASSWORD
+        string "Password for MQTT"
+        default "mypassword"
+        help
+            Unique password for the device that is configured to the access list of the MQTT broker. the MQTT username is the device ID.
+endmenu
 endmenu

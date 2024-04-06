@@ -19,7 +19,7 @@ class Relay {
     virtual ~Relay();
     void initialize(int pin, int relayNumber);
 
-    String status();
+    char *status();
 
 	// price functions
     void updatePriceThreshold(double threshold);

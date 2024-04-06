@@ -13,18 +13,22 @@ void CommandInterface::ledHandler(String input) {
     if (tokens.size() > 1) {
         if (tokens[1] == "on") {
             digitalWrite(ledPin, HIGH);
-        } else if (tokens[1] == "off") {
+        }
+        else if (tokens[1] == "off") {
             digitalWrite(ledPin, LOW);
-        } else {
+        }
+        else {
             Serial.println(
                 "Wrong parameter! 'help led' to get instructions. Inserted "
                 "parameter: '" +
                 tokens[1] + "'.");
         }
-    } else {
+    }
+    else {
         if (digitalRead(ledPin) == HIGH) {
             Serial.println("Led is on");
-        } else {
+        }
+        else {
             Serial.println("Led is off");
         }
     }
@@ -38,11 +42,12 @@ void CommandInterface::commandPrinter(String input) {
     if (tokens.size() > 1) {
         Serial.println(commandMap[tokens[1]].info.c_str());
         Serial.println(commandMap[tokens[1]].commands.c_str());
-    } else {
+    }
+    else {
         String text;
-        for (const auto &item : commandMap) {
+        for (const auto& item : commandMap) {
             text = String(item.second.name.c_str()) + " - " +
-                   String(item.second.info.c_str());
+                String(item.second.info.c_str());
             Serial.println(text.c_str());
         }
     }
@@ -53,40 +58,40 @@ void CommandInterface::runtimePrinter(String input) {}
 void CommandInterface::populateCommandMap() {
     // Use lambda functions to adapt member functions to std::function signature
     commandMap["tick"] =
-        CommandFunction{"tick", [this](String input) { tickHandler(input); },
-                        "Prints current tick count", "No commands"};
+        CommandFunction{ "tick", [this](String input) { tickHandler(input); },
+                        "Prints current tick count", "No commands" };
 
     commandMap["help"] = CommandFunction{
         "help", [this](String input) { commandPrinter(input); },
         "Prints commands and info",
-        "write help [COMMAND] to get valid commands and parameters"};
+        "write help [COMMAND] to get valid commands and parameters" };
 
     commandMap["led"] =
-        CommandFunction{"led", [this](String input) { ledHandler(input); },
-                        "Toggles LED on or off.", " Use 'led on' or 'led off'"};
+        CommandFunction{ "led", [this](String input) { ledHandler(input); },
+                        "Toggles LED on or off.", " Use 'led on' or 'led off'" };
 
     commandMap["runtime"] = CommandFunction{
         "runtime", [this](String input) { runtimePrinter(input); },
-        "Prints freeRTOS runtime stats"};
+        "Prints freeRTOS runtime stats" };
 
     commandMap["AT"] =
-        CommandFunction{"AT", [this](String input) { sendMessageToEsp(input); },
-                        "Sends AT messages to ESP."};
+        CommandFunction{ "AT", [this](String input) { sendMessageToEsp(input); },
+                        "Sends AT messages to ESP." };
 
     commandMap["relay"] = CommandFunction{
         "relay", [this](String input) { relayHandler(input); },
         "Read and control relays.",
         "use 'relay [relay number] [on/off]' to toggle relays. use 'relay "
-        "[relay number]' to get relay's info."};
+        "[relay number]' to get relay's info." };
 
     commandMap["mqtt"] = CommandFunction{
         "mqtt", [this](String input) { simulateMQTTMessages(input); },
         "Simulating MQTT messaging",
-        "use 'mqtt [topic] [message]' to simulate sending mqtt messages."};
+        "use 'mqtt [topic] [message]' to simulate sending mqtt messages." };
 
     commandMap["restart"] =
-        CommandFunction{"restart", [this](String input) { restart(input); },
-                        "Restarts the ESP", "Restarts the ESP."};
+        CommandFunction{ "restart", [this](String input) { restart(input); },
+                        "Restarts the ESP", "Restarts the ESP." };
 }
 
 void CommandInterface::sendMessageToEsp(String input) {}
@@ -109,12 +114,14 @@ void CommandInterface::simulateMQTTMessages(String input) {
 
     // Extract the topic and message
     String topic = input.substring(firstSpace + 1, secondSpace);
+#if 0
     String message = input.substring(secondSpace + 1);
 
     mqtt.message = message;
     mqtt.topic = topic;
 
     xQueueSend(mqttQueue, &mqtt, (TickType_t)10);
+#endif
 }
 
 void CommandInterface::relayHandler(String input) {}
@@ -135,7 +142,8 @@ void CommandInterface::commandEntered(String input) {
     if (commandMap.find(command) != commandMap.end()) {
         // Call the handling function for the received command
         commandMap[command].func(inputCopy);
-    } else {
+    }
+    else {
         debugMessage.tick = xTaskGetTickCount();
         sprintf(debugMessage.message, "Unknown command: '%s'\n\r", command.c_str());
 
