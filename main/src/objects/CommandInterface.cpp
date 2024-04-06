@@ -120,7 +120,7 @@ void CommandInterface::simulateMQTTMessages(String input) {
     mqtt.message = message;
     mqtt.topic = topic;
 
-    xQueueSend(mqttQueue, &mqtt, (TickType_t)10);
+    xQueueSend(mqttReceiveQueue, &mqtt, (TickType_t)10);
 #endif
 }
 

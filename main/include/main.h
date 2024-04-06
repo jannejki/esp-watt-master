@@ -4,7 +4,8 @@
 #include <Arduino.h>
 
 #define DEVICE_ID CONFIG_DEVICE_ID
-#define MQTT_DEVICE_TOPIC CONFIG_MQTT_DEVICE_TOPIC_BASE "/" DEVICE_ID "/command"
+#define MQTT_DEVICE_COMMAND_TOPIC CONFIG_MQTT_DEVICE_TOPIC_BASE "/" DEVICE_ID "/command"
+#define MQTT_DEVICE_STATUS_TOPIC CONFIG_MQTT_DEVICE_TOPIC_BASE "/" DEVICE_ID "/status"
 
 #define LED0 0
 #define LED1 35
@@ -54,7 +55,8 @@ struct WifiSettings {
 };
 
 extern QueueHandle_t debugQueue;
-extern QueueHandle_t mqttQueue;
+extern QueueHandle_t mqttReceiveQueue;
+extern QueueHandle_t mqttTransmitQueue;
 extern QueueHandle_t relayQueue;
 extern QueueHandle_t priceQueue;
 extern QueueHandle_t wifiSettingsQueue;

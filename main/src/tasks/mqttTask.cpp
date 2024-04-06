@@ -13,13 +13,13 @@ void mqttTask(void* params) {
     debugMessage.sender = "mqttTask";
 
     while (1) {
-        if (xQueueReceive(mqttQueue, &mqtt, portMAX_DELAY)) {
+        if (xQueueReceive(mqttReceiveQueue, &mqtt, portMAX_DELAY)) {
             ESP_LOGI("mqttTask", "topic: %s", mqtt.topic);
             ESP_LOGI("mqttTask", "message: %s", mqtt.message);
 
             std::vector<String> commands = splitMQTTMessageToCommands(mqtt.message);
 
-            if (strcmp(mqtt.topic, MQTT_DEVICE_TOPIC) == 0) {
+            if (strcmp(mqtt.topic, MQTT_DEVICE_COMMAND_TOPIC) == 0) {
                 RelaySettings relay = parseMqttRelaySettings(commands);
 
                 if (relay.relayNumber == -1) {

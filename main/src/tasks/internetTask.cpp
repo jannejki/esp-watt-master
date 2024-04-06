@@ -45,8 +45,9 @@ void internetTask(void* params) {
     ledParams.loopFinished = &ledTaskFinished;
 
     WifiSettings settings;
-
     EventBits_t mqttFlags;
+
+    mqttMessage mqttTransmitMessage;
 
     if (!apButtonPressed) {
         if (ledTask == NULL) {
@@ -123,7 +124,7 @@ void internetTask(void* params) {
         // Check if mqtt is connected
         mqttFlags = xEventGroupWaitBits(mqttEventGroup, MQTT_DISCONNECTED | MQTT_CONNECTED, pdTRUE, pdFALSE, 0);
         if (mqttFlags == MQTT_DISCONNECTED) {
-            
+
             if (ledTask == NULL) {
                 digitalWrite(greenLed, LOW);
                 xTaskCreate(
@@ -152,7 +153,7 @@ void internetTask(void* params) {
             esp_restart();
         }
         else if (wifiState == CONNECTING) {
-            if(ledTask == NULL || ledParams.pin == greenLed) {
+            if (ledTask == NULL || ledParams.pin == greenLed) {
                 vTaskDelete(ledTask);
                 ledTask = NULL;
                 ledParams.pin = yellowLed;
@@ -164,8 +165,12 @@ void internetTask(void* params) {
                     tskIDLE_PRIORITY,/* Priority at which the task is created. */
                     &ledTask);      /* Used to pass out the created task's handle. */
             }
-            
+
             ESP_LOGI(TAG, "Wifi lost, trying to connect to wifi...");
+        }
+
+        if (xQueueReceive(mqttTransmitQueue, &mqttTransmitMessage, 0) == pdTRUE) {
+            mqttSendData(&mqttTransmitMessage);
         }
 
         vTaskDelay(1000);

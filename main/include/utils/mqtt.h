@@ -15,5 +15,5 @@
 #define MQTT_NEW_MESSAGE (1 << 2 )
 
 bool mqtt_app_start();
-void mqttSendData();
+void mqttSendData(mqttMessage* message);
 #endif // MQTT_H

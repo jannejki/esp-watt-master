@@ -10,30 +10,31 @@ void Relay::initialize(int pin, int relayNumber) {
     this->mode = manual;
     this->state = false;
     this->priceThreshold = 0.0;
+    this->price = 0.0;
     pinMode(pin, OUTPUT);
 }
 
 char* Relay::status() {
-    String status = "Relay: " + String(relayNumber) + ", mode: ";
+    String status = "Relay=" + String(relayNumber) + "&mode=";
     switch (mode) {
         case automatic:
-            status += "automatic";
+            status += "auto";
             break;
         case manual:
             status += "manual";
             break;
     }
 
-    status += ", state: ";
+    status += "&state=";
     if (readState()) {
         status += "on";
     } else {
         status += "off";
     }
 
-    status += ", price: " + String(price);
+    status += "&price=" + String(price);
 
-    status += ", priceThreshold: " + String(priceThreshold);
+    status += "&priceThreshold=" + String(priceThreshold);
 
     char* cstr = new char[status.length() + 1];
     strcpy(cstr, status.c_str());

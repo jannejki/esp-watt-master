@@ -3,8 +3,8 @@
 bool mqttConnected = false;
 
 void subscribeToTopics(esp_mqtt_client_handle_t client) {
-    ESP_LOGI(TAG, "Subscribing to topics: %s", MQTT_DEVICE_TOPIC);
-    esp_mqtt_client_subscribe(client, (const char*)MQTT_DEVICE_TOPIC, 0);
+    ESP_LOGI(TAG, "Subscribing to topics: %s", MQTT_DEVICE_COMMAND_TOPIC);
+    esp_mqtt_client_subscribe(client, (const char*)MQTT_DEVICE_COMMAND_TOPIC, 0);
     ESP_LOGI(TAG, "Subscribing to topics: %s", "electric/price");
     esp_mqtt_client_subscribe(client, "electric/price", 0);
 }
@@ -70,7 +70,7 @@ static void mqtt_event_handler(void* handler_args, esp_event_base_t base, int32_
 
         sprintf(mqtt.message, "%.*s", event->data_len, event->data);
         sprintf(mqtt.topic, "%.*s", event->topic_len, event->topic);
-        xQueueSend(mqttQueue, &mqtt, 0);
+        xQueueSend(mqttReceiveQueue, &mqtt, 0);
         break;
 
     case MQTT_EVENT_ERROR:
@@ -151,6 +151,7 @@ bool mqtt_app_start(void) {
     return true;
 }
 
-void mqttSendData(char *topic, char *message) {
+void mqttSendData(mqttMessage *message) {
     // TODO send data to mqtt
+    esp_mqtt_client_publish(client, message->topic, message->message, 0, 1, 0);
 }
