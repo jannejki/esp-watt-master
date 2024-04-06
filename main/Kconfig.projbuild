@@ -108,5 +108,17 @@ menu "MQTT configuration"
         default "mypassword"
         help
             Unique password for the device that is configured to the access list of the MQTT broker. the MQTT username is the device ID.
+        
+    config MQTT_NEW_DEVICE_TOPIC
+        string "Topic to send the device data after connection"
+        default "device/new"
+        help
+            Topic to send the device data after connection. The data should be in a format "DEVICE_ID=[DEVICE_ID]".
+
+    config MQTT_DEVICE_TOPIC_BASE
+        string "Base topic for the device"
+        default "device"
+        help
+            Base topic for the device. The device will publish data to this topic. Rest of the topic is handled in main.h, where the device ID is appended to the base topic (e.g. device/[DEVICE_ID]).
 endmenu
 endmenu

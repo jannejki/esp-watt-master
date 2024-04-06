@@ -31,7 +31,6 @@ static void log_error_if_nonzero(const char* message, int error_code)
  */
 static void mqtt_event_handler(void* handler_args, esp_event_base_t base, int32_t event_id, void* event_data)
 {
-  //  xEventGroupClearBits(mqttEventGroup, MQTT_DISCONNECTED | MQTT_CONNECTED);
     ESP_LOGD(TAG, "Event dispatched from event loop base=%s, event_id=%" PRIi32 "", base, event_id);
     esp_mqtt_event_handle_t event = static_cast<esp_mqtt_event_handle_t>(event_data);
     esp_mqtt_client_handle_t client = event->client;
@@ -42,7 +41,6 @@ static void mqtt_event_handler(void* handler_args, esp_event_base_t base, int32_
     case MQTT_EVENT_CONNECTED:
         ESP_LOGI(TAG, "MQTT_EVENT_CONNECTED");
         subscribeToTopics(client);
-        mqttConnected = true;
         xEventGroupSetBits(mqttEventGroup, MQTT_CONNECTED);
         break;
 
@@ -65,6 +63,7 @@ static void mqtt_event_handler(void* handler_args, esp_event_base_t base, int32_
         break;
 
     case MQTT_EVENT_DATA:
+        xEventGroupSetBits(mqttEventGroup, MQTT_NEW_MESSAGE);
         ESP_LOGI(TAG, "MQTT_EVENT_DATA");
         ESP_LOGI(TAG, "TOPIC=%.*s\r\n", event->topic_len, event->topic);
         ESP_LOGI(TAG, "DATA=%.*s\r\n", event->data_len, event->data);
@@ -139,8 +138,15 @@ bool mqtt_app_start(void) {
     esp_mqtt_client_start(client);
 
     while (!mqttConnected) {
-        vTaskDelay(50 / portTICK_PERIOD_MS);
+        // Send the message to notify server that a new device is connected
+        esp_mqtt_client_publish(client, (const char*)CONFIG_MQTT_NEW_DEVICE_TOPIC, DEVICE_ID, 0, 1, 0);
+        EventBits_t bits = xEventGroupWaitBits(mqttEventGroup, MQTT_NEW_MESSAGE, pdFALSE, pdFALSE, 3000 / portTICK_PERIOD_MS);
+        if (bits & MQTT_NEW_MESSAGE) {
+            ESP_LOGI(TAG, "First MQTT message received, connected to broker");
+            xEventGroupClearBits(mqttEventGroup, MQTT_NEW_MESSAGE);
+            mqttConnected = true;
+        }
     }
-
+    ESP_LOGI(TAG, "RETURNING FROM MQTT START");
     return true;
 }

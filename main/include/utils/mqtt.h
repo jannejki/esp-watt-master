@@ -12,6 +12,7 @@
 
 #define MQTT_DISCONNECTED ( 1 << 0 )
 #define MQTT_CONNECTED ( 1 << 1 )
+#define MQTT_NEW_MESSAGE (1 << 2 )
 
 bool mqtt_app_start();
 #endif // MQTT_H

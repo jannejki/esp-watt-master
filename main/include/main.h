@@ -4,7 +4,7 @@
 #include <Arduino.h>
 
 #define DEVICE_ID CONFIG_DEVICE_ID
-#define MQTT_DEVICE_TOPIC "device/" DEVICE_ID
+#define MQTT_DEVICE_TOPIC CONFIG_MQTT_DEVICE_TOPIC_BASE "/" DEVICE_ID "/command"
 
 #define LED0 0
 #define LED1 35
