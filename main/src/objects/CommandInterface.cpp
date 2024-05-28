@@ -55,6 +55,40 @@ void CommandInterface::commandPrinter(String input) {
 
 void CommandInterface::runtimePrinter(String input) {}
 
+void CommandInterface::changeDebugLevel(String input) {
+    std::vector<String> tokens = splitCommandsAndArgs(input);
+
+    if (tokens.size() > 1) {
+        if (tokens[1] == "ERROR") {
+            esp_log_level_set("*", ESP_LOG_ERROR);
+            Serial.println("Debug level set to ERROR.");
+        }
+        else if (tokens[1] == "WARNING") {
+            esp_log_level_set("*", ESP_LOG_WARN);
+            Serial.println("Debug level set to WARNING.");
+        }
+        else if (tokens[1] == "INFO") {
+            esp_log_level_set("*", ESP_LOG_INFO);
+            Serial.println("Debug level set to INFO.");
+        }
+        else if (tokens[1] == "DEBUG") {
+            esp_log_level_set("*", ESP_LOG_DEBUG);
+            Serial.println("Debug level set to DEBUG.");
+        }
+        else if (tokens[1] == "VERBOSE") {
+            esp_log_level_set("*", ESP_LOG_VERBOSE);
+            Serial.println("Debug level set to VERBOSE.");
+        }
+        else if (tokens[1] == "NONE") {
+            esp_log_level_set("*", ESP_LOG_NONE);
+            Serial.println("Debug level set to NONE. No logs will be printed.");
+        }
+        else {
+            Serial.println("Unknown debug level. Use 'help debug' to get valid debug levels.");
+        }
+    }
+}
+
 void CommandInterface::populateCommandMap() {
     // Use lambda functions to adapt member functions to std::function signature
     commandMap["tick"] =
@@ -92,6 +126,11 @@ void CommandInterface::populateCommandMap() {
     commandMap["restart"] =
         CommandFunction{ "restart", [this](String input) { restart(input); },
                         "Restarts the ESP", "Restarts the ESP." };
+
+    commandMap["debug"] = CommandFunction{
+        "debug", [this](String input) { changeDebugLevel(input); },
+        "Change debug level",
+        "use 'debug [level]' to change debug level. Affects only for ESP's own logging system. Levels: ERROR, WARNING, INFO, DEBUG, VERBOSE, NONE." };
 }
 
 void CommandInterface::sendMessageToEsp(String input) {}

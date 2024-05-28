@@ -5,6 +5,7 @@ bool mqttConnected = false;
 void subscribeToTopics(esp_mqtt_client_handle_t client) {
     esp_mqtt_client_subscribe(client, (const char*)MQTT_DEVICE_COMMAND_TOPIC, 0);
     esp_mqtt_client_subscribe(client, "electric/price", 0);
+    esp_mqtt_client_subscribe(client, (const char*)MQTT_DEVICE_PING_TOPIC, 0);
 }
 
 esp_mqtt_client_handle_t client;

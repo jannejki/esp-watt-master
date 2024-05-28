@@ -172,7 +172,7 @@ void internetTask(void* params) {
             mqttSendData(&mqttTransmitMessage);
         }
 
-        vTaskDelay(1000);
+        vTaskDelay(10);
     }
 
 }

@@ -23,6 +23,8 @@ EventBits_t uxBits;
 EventGroupHandle_t taskInitializedGroup;
 EventGroupHandle_t mqttEventGroup;
 
+SemaphoreHandle_t sendRelayStatusSemaphore;
+
 extern "C" void app_main() {
     initArduino();
 
@@ -35,6 +37,8 @@ extern "C" void app_main() {
 
     taskInitializedGroup = xEventGroupCreate();
     mqttEventGroup = xEventGroupCreate();
+
+    sendRelayStatusSemaphore = xSemaphoreCreateBinary();
 
     esp_task_wdt_deinit();
     esp_log_level_set("*", ESP_LOG_INFO);

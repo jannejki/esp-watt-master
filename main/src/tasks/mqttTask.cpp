@@ -16,16 +16,22 @@ void mqttTask(void* params) {
         if (xQueueReceive(mqttReceiveQueue, &mqtt, portMAX_DELAY)) {
             std::vector<String> commands = splitMQTTMessageToCommands(mqtt.message);
 
+            // If the message is a ping message, send the status of the relays
+            if(strcmp(mqtt.topic, MQTT_DEVICE_PING_TOPIC) == 0) {
+                if(strcmp(mqtt.message, "status") == 0) {
+                    xSemaphoreGive(sendRelayStatusSemaphore);
+                }
+                else {
+                    ESP_LOGE("mqttTask", "Received unknown message: '%s' to topic: '%s'", mqtt.message, mqtt.topic);
+                }
+            }
+
+
             if (strcmp(mqtt.topic, MQTT_DEVICE_COMMAND_TOPIC) == 0) {
                 RelaySettings relay = parseMqttRelaySettings(commands);
 
                 if (relay.relayNumber == -1) {
-                    /*  debugMessage.message = "relay number is not set!";
-                      xQueueSend(debugQueue, &debugMessage, (TickType_t)100);*/
-                    Serial.print("relay number is not set: ");
-                    Serial.println(relay.relayNumber);
-                    Serial.print("message: ");
-                    Serial.println(mqtt.message);
+                    ESP_LOGE("mqttTask", "Relay number not found!");
                 }
                 else {
                     xQueueSend(relayQueue, &relay, (TickType_t)100);
@@ -80,6 +86,7 @@ struct RelaySettings parseMqttRelaySettings(std::vector<String> tokens) {
     enum relayMode mode = noModeChange;
     enum relayState state = noStateChange;
     double threshold = -1;
+    double price = NULL;
 
     DebugMessage debug;
     char buffer[64];
@@ -110,6 +117,7 @@ struct RelaySettings parseMqttRelaySettings(std::vector<String> tokens) {
             }
 
         }
+
         else if (params[0] == "state") {
             if (params[1] == "on") {
                 state = on;
@@ -125,10 +133,15 @@ struct RelaySettings parseMqttRelaySettings(std::vector<String> tokens) {
             }
 
         }
+
         else if (params[0] == "threshold") {
             threshold = params[1].toDouble();
-
         }
+
+        else if (params[0] == "price") {
+            price = params[1].toDouble();
+        }
+
         else {
             sprintf(debug.message, "Unknown command: '%s'.", params[0].c_str());
 
@@ -140,6 +153,7 @@ struct RelaySettings parseMqttRelaySettings(std::vector<String> tokens) {
     relaySettings.state = state;
     relaySettings.mode = mode;
     relaySettings.threshold = threshold;
+    relaySettings.price = price;
 
     return relaySettings;
 }

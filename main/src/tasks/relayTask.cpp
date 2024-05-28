@@ -48,6 +48,10 @@ void relayTask(void* params) {
                     relaySettings.threshold);
             }
 
+            if (relaySettings.price != NULL) {
+                relays[relaySettings.relayNumber].updatePrice(relaySettings.price);
+            }
+
             relays[relaySettings.relayNumber].changeState(state);
             relays[relaySettings.relayNumber].changeMode(mode);
 
@@ -64,6 +68,17 @@ void relayTask(void* params) {
             pdPASS) {
             Serial.println("price received");
             updateElectricPrices(electricPrices, relays, CONFIG_AMOUNT_OF_RELAYS);
+        }
+
+        if (xSemaphoreTake(sendRelayStatusSemaphore, (TickType_t) 0) == pdTRUE) {
+            for (int i = 0; i < CONFIG_AMOUNT_OF_RELAYS; i++) {
+                char* relayStatus = relays[i].status();
+                ESP_LOGI("Relay", "%s", relayStatus);
+                mqttMessage mqttTransmitMessage;
+                sprintf(mqttTransmitMessage.topic, "%s", MQTT_DEVICE_STATUS_TOPIC);
+                sprintf(mqttTransmitMessage.message, "%s", relayStatus);
+                xQueueSend(mqttTransmitQueue, &mqttTransmitMessage, 100);
+            }
         }
 
         vTaskDelay(50);

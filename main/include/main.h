@@ -6,6 +6,7 @@
 #define DEVICE_ID CONFIG_DEVICE_ID
 #define MQTT_DEVICE_COMMAND_TOPIC CONFIG_MQTT_DEVICE_TOPIC_BASE "/" DEVICE_ID "/command"
 #define MQTT_DEVICE_STATUS_TOPIC CONFIG_MQTT_DEVICE_TOPIC_BASE "/" DEVICE_ID "/status"
+#define MQTT_DEVICE_PING_TOPIC CONFIG_MQTT_DEVICE_TOPIC_BASE "/" DEVICE_ID "/ping"
 
 #define LED0 0
 #define LED1 35
@@ -40,6 +41,7 @@ struct RelaySettings {
     enum relayState state;
     enum relayMode mode;
     double threshold;
+    double price;
 };
 
 /**
@@ -62,7 +64,8 @@ extern QueueHandle_t priceQueue;
 extern QueueHandle_t wifiSettingsQueue;
 
 extern EventGroupHandle_t taskInitializedGroup;
-
 extern EventGroupHandle_t mqttEventGroup;
+
+extern SemaphoreHandle_t sendRelayStatusSemaphore;
 
 #endif  // MAIN_H

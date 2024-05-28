@@ -33,6 +33,7 @@ class CommandInterface {
     void relayHandler(String input);
     void restart(String input);
     void commandEntered(String input);
+    void changeDebugLevel(String input);
     std::vector<String> splitCommandsAndArgs(String input);
 };
 #endif  // COMMAND_INTERFACE_H_

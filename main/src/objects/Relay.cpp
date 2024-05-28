@@ -15,26 +15,27 @@ void Relay::initialize(int pin, int relayNumber) {
 }
 
 char* Relay::status() {
-    String status = "Relay=" + String(relayNumber) + "&mode=";
+    String status = "relay=" + String(relayNumber) + "&mode=";
     switch (mode) {
-        case automatic:
-            status += "auto";
-            break;
-        case manual:
-            status += "manual";
-            break;
+    case automatic:
+        status += "auto";
+        break;
+    case manual:
+        status += "manual";
+        break;
     }
 
     status += "&state=";
     if (readState()) {
         status += "on";
-    } else {
+    }
+    else {
         status += "off";
     }
 
     status += "&price=" + String(price);
 
-    status += "&priceThreshold=" + String(priceThreshold);
+    status += "&threshold=" + String(priceThreshold);
 
     char* cstr = new char[status.length() + 1];
     strcpy(cstr, status.c_str());
@@ -49,16 +50,15 @@ char* Relay::status() {
 void Relay::updatePriceThreshold(double threshold) {
     this->priceThreshold = threshold;
 
-    if(this->mode == automatic) {
+    if (this->mode == automatic) {
         changeState(this->price < this->priceThreshold);
     }
 }
 
 void Relay::updatePrice(double newPrice) {
     this->price = newPrice;
-
     if (this->mode == automatic) {
-        changeState(this->price < this->priceThreshold);
+        changeState(this->price > this->priceThreshold);
     }
 }
 
@@ -79,7 +79,7 @@ bool Relay::readState() { return digitalRead(pin); }
 /***************************************************/
 void Relay::changeMode(enum Relay::Mode mode) {
     this->mode = mode;
-    if(mode == automatic) {
+    if (mode == automatic) {
         changeState(this->price < this->priceThreshold);
     }
 }
