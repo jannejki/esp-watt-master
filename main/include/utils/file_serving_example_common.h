@@ -36,4 +36,5 @@
 #include "objects/Wifi.h"
 esp_err_t mountHTMLStorage(const char* base_path);
 esp_err_t startHTTPServer(const char* base_path, Wifi* wifi);
+const char* read_certificate_from_file(const char* path);
 #endif  // FILE_SERVING_EXAMPLE_COMMON_H

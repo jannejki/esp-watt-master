@@ -366,3 +366,15 @@ esp_err_t startHTTPServer(const char* base_path, Wifi* wifi) {
     httpd_register_uri_handler(server, &restart_command_post);
     return ESP_OK;
 }
+
+
+const char* read_certificate_from_file(const char* path) {
+    extern const unsigned char upload_script_start[] asm(
+        "_binary_mqtt_cert_crt_start");
+    extern const unsigned char upload_script_end[] asm(
+        "_binary_mqtt_cert_crt_end");
+    const size_t upload_script_size = (upload_script_end - upload_script_start);
+
+    return (const char*)upload_script_start;
+ 
+}

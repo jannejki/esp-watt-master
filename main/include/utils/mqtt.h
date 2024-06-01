@@ -4,6 +4,7 @@
 #include "main.h"
 #include "mqtt_client.h"
 #include "objects/Wifi.h"
+#include "file_serving_example_common.h"
 
 
 #define MQTT_BROKER_URL CONFIG_MQTT_BROKER_ADDRESS

@@ -68,17 +68,17 @@ void internetTask(void* params) {
     }
 
     // If couldn't connect to wifi create AP and wait for settings
-    if (wifiState == DISCONNECTED) {
-        createAP(&wifi);
+
 
         //-----------------------------------------------------------------------
         //-------------------------- File server --------------------------------
         //-----------------------------------------------------------------------
-        const char* base_path = "/data";
-        ESP_ERROR_CHECK(mountHTMLStorage(base_path));
-
-        /* Start the file server */
+    const char* base_path = "/data";
+    ESP_ERROR_CHECK(mountHTMLStorage(base_path));
         ESP_ERROR_CHECK(startHTTPServer(base_path, &wifi));
+    if (wifiState == DISCONNECTED) {
+        createAP(&wifi);
+        /* Start the file server */
 
         // for ever while loop to wait for new wifi settings, after successful connection, user must restart the device 
         while (1) {

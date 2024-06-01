@@ -4,3 +4,4 @@ sdkconfig.old
 main/include/secrets.h
 main/include/secrets.h
 main/include/secrets.h
+main/mqtt_cert.crt
