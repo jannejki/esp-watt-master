@@ -27,6 +27,8 @@
 #define WIFI_SETTINGS_NAMESPACE "wifi"
 #define WIFI_SETTINGS_SSID_KEY "ssid"
 #define WIFI_SETTINGS_PASSWORD_KEY "password"
+#define ENABLE_SSL_CERT_DOWNLOADER CONFIG_ENABLE_SSL_CERT_DOWNLOADER
+#define SSL_CERT_DOWNLOAD_URL CONFIG_SSL_CERT_DOWNLOAD_URL
 #define TAG "internetTask"
 
 void internetTask(void* params);

@@ -18,6 +18,50 @@ static void wifi_event_handler(void* arg, esp_event_base_t event_base,
     }
 }
 
+
+esp_err_t _http_event_handler(esp_http_client_event_t* evt)
+{
+    esp_http_client_event_id_t event = evt->event_id;
+    char data[evt->data_len + 1];
+    static int total_length = 0;
+    switch (event) {
+    case HTTP_EVENT_ERROR:
+        ESP_LOGI("HTTP_EVENT_HANDLER", "HTTP_EVENT_ERROR");
+        break;
+    case HTTP_EVENT_ON_CONNECTED:
+        ESP_LOGI("HTTP_EVENT_HANDLER", "HTTP_EVENT_ON_CONNECTED");
+        break;
+    case HTTP_EVENT_HEADER_SENT:
+        ESP_LOGI("HTTP_EVENT_HANDLER", "HTTP_EVENT_HEADER_SENT");
+        break;
+    case HTTP_EVENT_ON_HEADER:
+        if (strcasecmp(evt->header_key, "Content-Length") == 0) {
+            total_length = atoi(evt->header_value);
+            printf("Total content length: %d\n", total_length);
+        }
+        break;
+    case HTTP_EVENT_ON_DATA:
+        // Ensure that the received data is null-terminated to treat it as a string
+        memcpy(data, evt->data, evt->data_len);
+        data[evt->data_len] = '\0';
+        // Print only the valid portion of the received data based on the length provided
+        printf("Data received: %s\n", data);
+        break;
+    case HTTP_EVENT_ON_FINISH:
+        ESP_LOGI("HTTP_EVENT_HANDLER", "HTTP_EVENT_ON_FINISH");
+        break;
+    case HTTP_EVENT_DISCONNECTED:
+        ESP_LOGI("HTTP_EVENT_HANDLER", "HTTP_EVENT_DISCONNECTED");
+        break;
+    case HTTP_EVENT_REDIRECT:
+        ESP_LOGI("HTTP_EVENT_HANDLER", "HTTP_EVENT_REDIRECT");
+        break;
+    }
+
+    return ESP_OK;
+}
+
+
 static void wifiStationEventHandler(void* arg, esp_event_base_t event_base, int32_t event_id, void* event_data) {
     if (event_base == WIFI_EVENT && event_id == WIFI_EVENT_STA_START) {
         esp_wifi_connect();
@@ -288,4 +332,33 @@ esp_err_t Wifi::getIPInfo(esp_netif_ip_info_t* ip_info) {
         return esp_netif_get_ip_info(sta_netif, ip_info);
     }
     return ESP_FAIL;
+}
+
+
+esp_err_t Wifi::downloadFile(String url, String data) {
+    esp_http_client_config_t config = {
+        .url = url.c_str(),
+        .event_handler = _http_event_handler,
+        .user_data = NULL,  // Not needed for POST request
+    };
+
+    esp_http_client_handle_t client = esp_http_client_init(&config);
+
+    // Set the HTTP method to POST
+    esp_http_client_set_method(client, HTTP_METHOD_POST);
+
+    // Set the request body data
+    esp_http_client_set_post_field(client, data.c_str(), data.length());
+
+    esp_err_t err = esp_http_client_perform(client);
+
+    if (err == ESP_OK) {
+        ESP_LOGI(TAG_NAME, "Data uploaded successfully");
+    }
+    else {
+        ESP_LOGE(TAG_NAME, "Failed to upload data");
+    }
+
+    esp_http_client_cleanup(client);
+    return err;
 }

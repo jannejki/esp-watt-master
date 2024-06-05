@@ -121,4 +121,18 @@ menu "MQTT configuration"
         help
             Base topic for the device. The device will publish data to this topic. Rest of the topic is handled in main.h, where the device ID is appended to the base topic (e.g. device/[DEVICE_ID]).
 endmenu
+
+menu "SSL Certificate downloader"
+    config ENABLE_SSL_CERT_DOWNLOADER
+        bool "Enable SSL certificate downloader (beta testing)"
+        help
+           If enabled, downloads the SSL certificate from the designated HTTP web server and overwrites the default certificate from spiffs. (Still in beta testing, use with caution.)
+
+    config SSL_CERT_DOWNLOAD_URL
+        string "SSL certificate download URL"
+        depends on ENABLE_SSL_CERT_DOWNLOADER
+        default "http://pve.mosquitto/certificate"
+        help 
+            URL to download the SSL certificate from. For example, "http://pve.mosquitto/certificate".   
+endmenu
 endmenu

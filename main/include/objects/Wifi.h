@@ -14,7 +14,7 @@
 #include "nvs_flash.h"
 #include "utils/debug.h"
 #include "utils/scanner.h"
-
+#include "esp_http_client.h"
 #define WIFI_FINISHED           0b1000
 #define WIFI_CONNECTED_BIT      0b0100
 #define WIFI_WRONG_PASSWORD_BIT 0b0010
@@ -87,5 +87,6 @@ public:
     WifiState getWifiState(WifiSettings* settings);
     esp_err_t getIPInfo(esp_netif_ip_info_t* ip_info);
     esp_err_t changeStationSettings(String& ssid, String& password);
+    esp_err_t downloadFile(String url, String filename);
 };
 #endif  // WIFI_OBJ_H_

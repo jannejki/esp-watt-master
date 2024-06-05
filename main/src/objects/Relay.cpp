@@ -49,6 +49,7 @@ char* Relay::status() {
 /***************************************************/
 void Relay::updatePriceThreshold(double threshold) {
     this->priceThreshold = threshold;
+    ESP_LOGI("Relay", "Price threshold updated to %f, changing state: %d", threshold, this->price < this->priceThreshold);
 
     if (this->mode == automatic) {
         changeState(this->price < this->priceThreshold);
@@ -57,8 +58,9 @@ void Relay::updatePriceThreshold(double threshold) {
 
 void Relay::updatePrice(double newPrice) {
     this->price = newPrice;
+    ESP_LOGI("Relay", "electric price updated to %f, changing state: %d", newPrice, this->price < this->priceThreshold);
     if (this->mode == automatic) {
-        changeState(this->price > this->priceThreshold);
+        changeState(this->price < this->priceThreshold);
     }
 }
 
@@ -79,6 +81,7 @@ bool Relay::readState() { return digitalRead(pin); }
 /***************************************************/
 void Relay::changeMode(enum Relay::Mode mode) {
     this->mode = mode;
+    
     if (mode == automatic) {
         changeState(this->price < this->priceThreshold);
     }

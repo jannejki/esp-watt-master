@@ -5,6 +5,7 @@
 #include "tasks/internetTask.h"
 #include "tasks/mqttTask.h"
 #include "tasks/relayTask.h"
+#include "tasks/displayTask.h"
 
 QueueHandle_t debugQueue;
 QueueHandle_t mqttReceiveQueue;
@@ -47,4 +48,5 @@ extern "C" void app_main() {
     xTaskCreate(relayTask, "Relay task", 4096, NULL, 5, NULL);
     xTaskCreate(mqttTask, "mqtt task", 4096, NULL, 5, NULL);
     xTaskCreate(internetTask, "internet task", 24576 + configMINIMAL_STACK_SIZE, NULL, 5, NULL);
+    xTaskCreate(displayTask, "display task", 4096, NULL, 5, NULL);
 }

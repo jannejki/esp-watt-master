@@ -67,15 +67,13 @@ void internetTask(void* params) {
         ledTask = NULL;
     }
 
-    // If couldn't connect to wifi create AP and wait for settings
 
-
-        //-----------------------------------------------------------------------
-        //-------------------------- File server --------------------------------
-        //-----------------------------------------------------------------------
+    //-----------------------------------------------------------------------
+    //-------------------------- File server --------------------------------
+    //-----------------------------------------------------------------------
     const char* base_path = "/data";
     ESP_ERROR_CHECK(mountHTMLStorage(base_path));
-        ESP_ERROR_CHECK(startHTTPServer(base_path, &wifi));
+    ESP_ERROR_CHECK(startHTTPServer(base_path, &wifi));
     if (wifiState == DISCONNECTED) {
         createAP(&wifi);
         /* Start the file server */
@@ -111,6 +109,11 @@ void internetTask(void* params) {
 
 
     bool connected = mqtt_app_start();
+    EventBits_t bits = xEventGroupWaitBits(mqttEventGroup, MQTT_NEW_MESSAGE, pdFALSE, pdFALSE, 3000 / portTICK_PERIOD_MS);
+    if (bits & MQTT_NEW_MESSAGE) {
+
+    }
+
     if (connected) {
         while (!ledTaskFinished) {/*Wait for ledTask to finish, ledTaskFinished is toggled in the led task*/ }
         vTaskDelete(ledTask);
@@ -118,8 +121,23 @@ void internetTask(void* params) {
         digitalWrite(greenLed, HIGH);
     }
 
-    while (1) {
+#if CONFIG_ENABLE_SSL_CERT_DOWNLOADER
 
+    ESP_LOGI(TAG, "Starting downloading");
+    String url = CONFIG_SSL_CERT_DOWNLOAD_URL;
+    if (url.length() > 0) {
+
+
+        String path = "/data/mqtt_cert.crt";
+        wifi.downloadFile(url, path);
+        ESP_LOGI(TAG, "Downloading finished");
+    }
+    else {
+        ESP_LOGE(TAG, "No URL provided for downloading SSL certificate. Please provide a URL in the menuconfig");
+    }
+
+#endif
+    while (1) {
         // Check if mqtt is connected
         mqttFlags = xEventGroupWaitBits(mqttEventGroup, MQTT_DISCONNECTED | MQTT_CONNECTED, pdTRUE, pdFALSE, 0);
         if (mqttFlags == MQTT_DISCONNECTED) {

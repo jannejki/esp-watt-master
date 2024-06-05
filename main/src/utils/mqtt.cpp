@@ -90,31 +90,7 @@ static void mqtt_event_handler(void* handler_args, esp_event_base_t base, int32_
 bool mqtt_app_start(void) {
 
     char mqttAddress[128]; // Adjust the size according to your URI length
-    const char* mqtt_eclipse_org_pem_start = R"EOF(
------BEGIN CERTIFICATE-----
-MIIDqzCCApOgAwIBAgIUHtwCUGZao/FVlGP44pysO9BGdCYwDQYJKoZIhvcNAQEL
-BQAwZTELMAkGA1UEBhMCRkkxEDAOBgNVBAgMB1V1c2ltYWExDjAMBgNVBAcMBUVz
-cG9vMRQwEgYDVQQKDAtXYXR0LU1hc3RlcjEeMBwGA1UECwwVQ2VydGlmaWNhdGUg
-QXV0aG9yaXR5MB4XDTI0MDUyOTA0MTE1M1oXDTI1MDUyOTA0MTE1M1owZTELMAkG
-A1UEBhMCRkkxEDAOBgNVBAgMB1V1c2ltYWExDjAMBgNVBAcMBUVzcG9vMRQwEgYD
-VQQKDAtXYXR0LU1hc3RlcjEeMBwGA1UECwwVQ2VydGlmaWNhdGUgQXV0aG9yaXR5
-MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAwul87PGvPkUKrIPpeP5e
-bVxYJc2nA6vGSh2fQI608kWUD+uZaoQ2M0v2RF6r0eC0TlBkg6XnGCrVtfJsCX8b
-Wx8XmVtwxL3tcdPveMPaA9R/e2XhEUFrOmLNXeQ0GALBB4frB15G6i55E/phG+yb
-7uz/9x1X9biuuFJzSeHLiBzfyeiqdDS7F9cTXYKO+YaKqQDXP5AHFH0tEcsCtUho
-6ODDMbmOklubdBLNE6LLt+yUPjLqlCYZTbjWkfvUlRhopdGErMJjLViMp/Ro8nyl
-kC/8WVFxMfEyml5+GKWriVb26E+Z5XSsB/fTuWFMCqP0Zmx6nOnK7QPeFnmyBT7p
-RwIDAQABo1MwUTAdBgNVHQ4EFgQUecB03jeSyc1If/5rEyOJ/qE5tmEwHwYDVR0j
-BBgwFoAUecB03jeSyc1If/5rEyOJ/qE5tmEwDwYDVR0TAQH/BAUwAwEB/zANBgkq
-hkiG9w0BAQsFAAOCAQEAbC+OMo0+mVzoA8Mv+H3doGHUvlxKU8hd0oRZ6iEn29sR
-8TlHK7A05ux4r2NkZcL1/ZRaaWE4Cw5VZCFcOmx32YFMA9XK+fbdpt4PHE+gWpga
-xsv8xjB/P9FBnsywzG3rk7kxPHTsF9EIy3UZFJ0oTwJ6W/mztuaHstY+QHEA/NFy
-r17lsuZb5ARn9yr7IV73kcBBIv7olXVKlD8nMXI7gunMBhHn+6OtEvqCsBer1Prg
-mwvG6F30BbhOC02bCaEuh/wSyMaMigychIGK198cdAjeQYfCvnSIISCnHEtdiJ0I
-77qTmGY+rk7YX+HI5LKKB28osDfH25L/SSbpHgaDEQ==
------END CERTIFICATE-----
-)EOF";
-// Add the certificate read from the file
+    // Add the certificate read from the file
 
     const char* cert = read_certificate_from_file("/mqtt_cert.crt");
     if (cert == NULL) {
