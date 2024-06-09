@@ -1,6 +1,4 @@
 #include "tasks/internetTask.h"
-#define GREEN_LED_PIN 4
-#define YELLOW_LED_PIN 5
 #define AP_BUTTON 6
 //=======================================================================
 //===================== Function definitions ============================
@@ -13,9 +11,6 @@ void apButtonInterrupt(void* arg);
 //=======================================================================
 //======================== Global variables =============================
 //=======================================================================
-TaskHandle_t ledTask;
-struct ledBlinkTaskParams ledParams;
-bool ledTaskFinished;
 WifiState wifiState;
 Preferences savedSettings;
 
@@ -34,14 +29,7 @@ void internetTask(void* params) {
     };
     gpio_config(&ap_button_conf);
 
-    //  pinMode(AP_BUTTON, INPUT);
-    uint8_t greenLed = GREEN_LED_PIN;
-    uint8_t yellowLed = YELLOW_LED_PIN;
-
-    pinMode(greenLed, OUTPUT);
-    pinMode(yellowLed, OUTPUT);
     boolean apButtonPressed = gpio_get_level((gpio_num_t)AP_BUTTON);
-    TaskHandle_t ledTask = NULL;
     savedSettings.begin("wifi", false);
 
     String ssid = savedSettings.getString(WIFI_SETTINGS_SSID_KEY);
@@ -49,10 +37,6 @@ void internetTask(void* params) {
 
     Wifi wifi;
     wifiState = DISCONNECTED;
-    ledTaskFinished = false;
-    ledParams.pin = yellowLed;
-    ledParams.delay = 1000;
-    ledParams.loopFinished = &ledTaskFinished;
 
     WifiSettings settings;
     EventBits_t mqttFlags;
@@ -64,21 +48,8 @@ void internetTask(void* params) {
 
     // If the apButton is not pressed on restart, try to connect to the wifi. Otherwise the immediately create the AP.
     if (!apButtonPressed) {
-        if (ledTask == NULL) {
-            xTaskCreate(
-                ledBlinkTask,       /* Function that implements the task. */
-                "WIFI_LED",          /* Text name for the task. */
-                4096,      /* Stack size in words, not bytes. */
-                (void*)&ledParams,    /* Parameter passed into the task. */
-                tskIDLE_PRIORITY,/* Priority at which the task is created. */
-                &ledTask);      /* Used to pass out the created task's handle. */
-        }
-
         wifi.mode(WIFI_MODE_STA);
         wifiState = wifi.connectToWifi(ssid, password);
-        while (!ledTaskFinished) {/*Wait for ledTask to finish, ledTaskFinished is toggled in the led task*/ }
-        vTaskDelete(ledTask);
-        ledTask = NULL;
     }
 
 
@@ -91,7 +62,7 @@ void internetTask(void* params) {
 
     if (wifiState == DISCONNECTED) {
         createAP(&wifi);
-        
+
         // for ever while loop to wait for new wifi settings, after successful connection, user must restart the device 
         while (1) {
             if (xQueueReceive(wifiSettingsQueue, &settings, 0) == pdTRUE) {
@@ -112,28 +83,8 @@ void internetTask(void* params) {
         }
     }
 
-    ledParams.pin = greenLed;
-    xTaskCreate(
-        ledBlinkTask,       /* Function that implements the task. */
-        "MQTT_LED",          /* Text name for the task. */
-        4096,      /* Stack size in words, not bytes. */
-        (void*)&ledParams,    /* Parameter passed into the task. */
-        tskIDLE_PRIORITY,/* Priority at which the task is created. */
-        &ledTask);      /* Used to pass out the created task's handle. */
-
 
     bool connected = mqtt_app_start();
-    EventBits_t bits = xEventGroupWaitBits(mqttEventGroup, MQTT_NEW_MESSAGE, pdFALSE, pdFALSE, 3000 / portTICK_PERIOD_MS);
-    if (bits & MQTT_NEW_MESSAGE) {
-
-    }
-
-    if (connected) {
-        while (!ledTaskFinished) {/*Wait for ledTask to finish, ledTaskFinished is toggled in the led task*/ }
-        vTaskDelete(ledTask);
-        ledTask = NULL;
-        digitalWrite(greenLed, HIGH);
-    }
 
 #if CONFIG_ENABLE_SSL_CERT_DOWNLOADER
 
@@ -149,34 +100,10 @@ void internetTask(void* params) {
     else {
         ESP_LOGE(TAG, "No URL provided for downloading SSL certificate. Please provide a URL in the menuconfig");
     }
-
 #endif
     while (1) {
         // Check if mqtt is connected
         mqttFlags = xEventGroupWaitBits(mqttEventGroup, MQTT_DISCONNECTED | MQTT_CONNECTED, pdTRUE, pdFALSE, 0);
-        if (mqttFlags == MQTT_DISCONNECTED) {
-
-            if (ledTask == NULL) {
-                digitalWrite(greenLed, LOW);
-                xTaskCreate(
-                    ledBlinkTask,       /* Function that implements the task. */
-                    "MQTT_LED",          /* Text name for the task. */
-                    4096,      /* Stack size in words, not bytes. */
-                    (void*)&ledParams,    /* Parameter passed into the task. */
-                    tskIDLE_PRIORITY,/* Priority at which the task is created. */
-                    &ledTask);      /* Used to pass out the created task's handle. */
-    }
-}
-
-        else if (mqttFlags == MQTT_CONNECTED) {
-            if (ledTask != NULL) {
-                ledTaskFinished = true;
-                vTaskDelete(ledTask);
-                ledTask = NULL;
-            }
-            digitalWrite(greenLed, HIGH);
-        }
-
         // Check if wifi is in trouble
         wifiState = wifi.getWifiState(&settings);
         if (wifiState == DISCONNECTED) {
@@ -184,19 +111,6 @@ void internetTask(void* params) {
             esp_restart();
         }
         else if (wifiState == CONNECTING) {
-            if (ledTask == NULL || ledParams.pin == greenLed) {
-                vTaskDelete(ledTask);
-                ledTask = NULL;
-                ledParams.pin = yellowLed;
-                xTaskCreate(
-                    ledBlinkTask,       /* Function that implements the task. */
-                    "WIFI_LED",          /* Text name for the task. */
-                    4096,      /* Stack size in words, not bytes. */
-                    (void*)&ledParams,    /* Parameter passed into the task. */
-                    tskIDLE_PRIORITY,/* Priority at which the task is created. */
-                    &ledTask);      /* Used to pass out the created task's handle. */
-            }
-
             ESP_LOGW(TAG, "Wifi lost, trying to connect to wifi...");
         }
 
@@ -227,13 +141,10 @@ boolean waitForDebugTask() {
 }
 
 void createAP(Wifi* wifi) {
-    digitalWrite(GREEN_LED_PIN, LOW);
-    digitalWrite(YELLOW_LED_PIN, HIGH);
     wifi->mode(WIFI_MODE_APSTA);
 }
 
 void stopAP(Wifi* wifi) {
-    digitalWrite(YELLOW_LED_PIN, LOW);
     wifi->mode(WIFI_MODE_STA);
 }
 

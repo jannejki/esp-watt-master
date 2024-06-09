@@ -20,7 +20,6 @@
 #include "utils/debug.h"
 
 #include "objects/Wifi.h"
-#include "tasks/ledBlinkTask.h"
 #include "utils/file_serving_example_common.h"
 #include "utils/mqtt.h"
 #include "driver/gpio.h"

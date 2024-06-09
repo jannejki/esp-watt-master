@@ -26,12 +26,6 @@ struct mqttMessage {
     char message[128];
 };
 
-struct ledBlinkTaskParams {
-    uint8_t pin;
-    int delay;
-    bool* loopFinished;
-};
-
 enum relayState { on, off, noStateChange };
 
 enum relayMode { automatic, manual, noModeChange };
