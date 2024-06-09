@@ -27,7 +27,13 @@
         "string_view": "cpp",
         "initializer_list": "cpp",
         "regex": "cpp",
-        "vector": "cpp"
+        "vector": "cpp",
+        "memory": "cpp",
+        "random": "cpp",
+        "future": "cpp",
+        "deque": "cpp",
+        "unordered_map": "cpp",
+        "unordered_set": "cpp"
     },
     "C_Cpp.errorSquiggles": "disabled"
 }

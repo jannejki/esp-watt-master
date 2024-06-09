@@ -2,16 +2,17 @@
 
 class Relay {
     int pin;
-    int relayNumber;
 
     bool state = false;
-    double priceThreshold;
     double price;
 
     TickType_t lastToggle;
     TickType_t cooldownTicks = 500;
 
-   public:
+public:
+    double priceThreshold;
+    int relayNumber;
+
     enum Mode { automatic, manual };
     Mode mode = manual;
 
@@ -19,9 +20,9 @@ class Relay {
     virtual ~Relay();
     void initialize(int pin, int relayNumber);
 
-    char *status();
+    char* status();
 
-	// price functions
+    // price functions
     void updatePriceThreshold(double threshold);
     void updatePrice(double newPrice);
 

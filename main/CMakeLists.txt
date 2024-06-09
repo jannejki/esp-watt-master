@@ -19,7 +19,13 @@ file(GLOB_RECURSE UTIL_SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/src/utils/*.cpp")
 # Add all source files from the "PubSubClient" directory
 file(GLOB_RECURSE PUBSUB_SOURCES "A:/esp/esp-idf/components/arduino/libraries/PubSubClient/src/*.cpp")
 
+file(GLOB_RECURSE DISPLAY_SOURCES "A:/esp/esp-idf/components/arduino/libraries/U8g2-2.34.22/src/*.cpp" "A:/esp/esp-idf/components/arduino/libraries/U8g2-2.34.22/src/clib/*.c")
+
 # Add additional source files
-target_sources(${COMPONENT_TARGET} PRIVATE ${OBJECTS_SOURCES} ${TASKS_SOURCES} ${PUBSUB_SOURCES} ${UTIL_SOURCES})
+target_sources(${COMPONENT_TARGET} PRIVATE ${OBJECTS_SOURCES} ${TASKS_SOURCES} ${PUBSUB_SOURCES} ${UTIL_SOURCES} ${DISPLAY_SOURCES})
 
 include_directories("A:/esp/esp-idf/components/arduino/libraries/PubSubClient/src")
+include_directories(
+    "A:/esp/esp-idf/components/arduino/libraries/U8g2-2.34.22/src"
+    "A:/esp/esp-idf/components/arduino/libraries/U8g2-2.34.22/src/clib"
+)

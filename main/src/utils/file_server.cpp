@@ -61,6 +61,7 @@ static esp_err_t favicon_get_handler(httpd_req_t* req) {
  * string other than '/', since SPIFFS doesn't support directories */
 static esp_err_t http_resp_dir_html(httpd_req_t* req, const char* dirpath) {
     /* Send HTML file header */
+    ESP_LOGI(TAG, "Generating directory contents, dirpath: %s", dirpath);
     httpd_resp_sendstr_chunk(req, "<!DOCTYPE html><html><body>");
 
     /* Get handle to embedded file upload script */
@@ -369,12 +370,12 @@ esp_err_t startHTTPServer(const char* base_path, Wifi* wifi) {
 
 
 const char* read_certificate_from_file(const char* path) {
-    extern const unsigned char upload_script_start[] asm(
+    extern const unsigned char mqtt_script_start[] asm(
         "_binary_mqtt_cert_crt_start");
-    extern const unsigned char upload_script_end[] asm(
+    extern const unsigned char mqtt_script_end[] asm(
         "_binary_mqtt_cert_crt_end");
-    const size_t upload_script_size = (upload_script_end - upload_script_start);
+    const size_t upload_script_size = (mqtt_script_end - mqtt_script_start);
 
-    return (const char*)upload_script_start;
- 
+    return (const char*)mqtt_script_start;
+
 }

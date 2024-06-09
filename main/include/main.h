@@ -56,12 +56,45 @@ struct WifiSettings {
     EventGroupHandle_t connectionFlag; // WIFI_FINISHED, WIFI_CONNECTED_BIT, WIFI_WRONG_PASSWORD_BIT
 };
 
+
+/**
+ * @brief Enum for the display to know what part to update
+*/
+typedef enum {
+    INTERNET_UPDATE = 0x01,
+    RELAY_UPDATE = 0x03,
+    MQTT_UPDATE = 0x05,
+    ALL_UPDATES = 0x0F
+} UpdateType;
+
+typedef enum {
+    STATION = 0x01,
+    AP_MODE = 0x02
+} InternetMode;
+
+/**
+ * @brief struct for holding the display message
+ * @param updateType: type of the update. enum UpdateType
+ * @param IPaddress: IP address of the device
+ * @param connection: connection status
+ * @param relays: Relay that is updated
+*/
+struct DisplayMessage {
+    UpdateType updateType;
+    InternetMode internetMode;
+    char IPaddress[32];  // To hold the IP address as a string
+    bool internetConnection;     // Connection status
+    bool mqttConnection;
+    RelaySettings relay;
+};
+
 extern QueueHandle_t debugQueue;
 extern QueueHandle_t mqttReceiveQueue;
 extern QueueHandle_t mqttTransmitQueue;
 extern QueueHandle_t relayQueue;
 extern QueueHandle_t priceQueue;
 extern QueueHandle_t wifiSettingsQueue;
+extern QueueHandle_t displayQueue;
 
 extern EventGroupHandle_t taskInitializedGroup;
 extern EventGroupHandle_t mqttEventGroup;

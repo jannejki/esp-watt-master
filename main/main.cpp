@@ -12,7 +12,7 @@ QueueHandle_t mqttReceiveQueue;
 QueueHandle_t mqttTransmitQueue;
 QueueHandle_t relayQueue;
 QueueHandle_t priceQueue;
-
+QueueHandle_t displayQueue;
 /**
  * @brief Queue for sending new wifi settings to wifi task
  * Uses struct WifiSettings that contains new ssid, password and event group
@@ -35,6 +35,7 @@ extern "C" void app_main() {
     relayQueue = xQueueCreate(10, sizeof(RelaySettings));
     priceQueue = xQueueCreate(10, sizeof(double[6]));
     wifiSettingsQueue = xQueueCreate(1, sizeof(WifiSettings));
+    displayQueue = xQueueCreate(5, sizeof(DisplayMessage));
 
     taskInitializedGroup = xEventGroupCreate();
     mqttEventGroup = xEventGroupCreate();
@@ -44,9 +45,9 @@ extern "C" void app_main() {
     esp_task_wdt_deinit();
     esp_log_level_set("*", ESP_LOG_INFO);
     // start tasks
+    xTaskCreate(displayTask, "display task", 4096, NULL, 7, NULL);
     xTaskCreate(debugTask, "Debug task", 4096, NULL, 5, NULL);
     xTaskCreate(relayTask, "Relay task", 4096, NULL, 5, NULL);
     xTaskCreate(mqttTask, "mqtt task", 4096, NULL, 5, NULL);
     xTaskCreate(internetTask, "internet task", 24576 + configMINIMAL_STACK_SIZE, NULL, 5, NULL);
-    xTaskCreate(displayTask, "display task", 4096, NULL, 5, NULL);
 }

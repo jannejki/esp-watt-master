@@ -8,6 +8,14 @@ void subscribeToTopics(esp_mqtt_client_handle_t client) {
     esp_mqtt_client_subscribe(client, (const char*)MQTT_DEVICE_PING_TOPIC, 0);
 }
 
+void sendStatusToDisplay(boolean mqttConnected) {
+    DisplayMessage displayMessage;
+    displayMessage.updateType = MQTT_UPDATE;
+    displayMessage.mqttConnection = mqttConnected;
+
+    xQueueSend(displayQueue, &displayMessage, 0);
+}
+
 esp_mqtt_client_handle_t client;
 //=======================================================================
 //======================== MQTT testing =================================
@@ -32,7 +40,6 @@ static void mqtt_event_handler(void* handler_args, esp_event_base_t base, int32_
 {
     esp_mqtt_event_handle_t event = static_cast<esp_mqtt_event_handle_t>(event_data);
     esp_mqtt_client_handle_t client = event->client;
-    int msg_id;
     mqttMessage mqtt;
 
     switch ((esp_mqtt_event_id_t)event_id) {
@@ -40,12 +47,14 @@ static void mqtt_event_handler(void* handler_args, esp_event_base_t base, int32_
         ESP_LOGD(TAG, "MQTT_EVENT_CONNECTED");
         subscribeToTopics(client);
         xEventGroupSetBits(mqttEventGroup, MQTT_CONNECTED);
+        sendStatusToDisplay(true);
         break;
 
     case MQTT_EVENT_DISCONNECTED:
         ESP_LOGD(TAG, "MQTT_EVENT_DISCONNECTED");
         mqttConnected = false;
         xEventGroupSetBits(mqttEventGroup, MQTT_DISCONNECTED);
+        sendStatusToDisplay(false);
         break;
 
     case MQTT_EVENT_SUBSCRIBED:
@@ -124,10 +133,17 @@ bool mqtt_app_start(void) {
 
     // Add the certificate
   //  mqtt_cfg.broker.verification.certificate = mqtt_eclipse_org_pem_start;
-
     credentials.authentication = auth;
     mqtt_cfg.credentials = credentials;
 
+
+    esp_mqtt_client_config_t::session_t::last_will_t will = {};
+    will.topic = "device/2e6c68e6-3fbc-42f9-8168-77bd8f584cb3/disconnect";
+    will.qos = 1;
+    will.retain = 0;
+    will.msg = DEVICE_ID;
+    mqtt_cfg.session.last_will = will;
+    mqtt_cfg.session.keepalive = 20;
     // Initialize the MQTT client
     client = esp_mqtt_client_init(&mqtt_cfg);
     if (client == NULL) {

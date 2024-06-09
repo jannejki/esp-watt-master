@@ -5,6 +5,13 @@ static int s_retry_num = 0;
 /* FreeRTOS event group to signal when we are connected*/
 EventGroupHandle_t s_wifi_event_group;
 
+void sendWifiStatusToDisplay(boolean wifiConnected) {
+    DisplayMessage displayMessage;
+    displayMessage.updateType = INTERNET_UPDATE;
+    displayMessage.internetConnection = wifiConnected;
+
+    xQueueSend(displayQueue, &displayMessage, 0);
+}
 
 static void wifi_event_handler(void* arg, esp_event_base_t event_base,
     int32_t event_id, void* event_data) {
@@ -68,7 +75,7 @@ static void wifiStationEventHandler(void* arg, esp_event_base_t event_base, int3
     }
     else if (event_base == WIFI_EVENT &&
         event_id == WIFI_EVENT_STA_DISCONNECTED) {
-
+        sendWifiStatusToDisplay(false);
         wifi_event_sta_disconnected_t* eventData = (wifi_event_sta_disconnected_t*)event_data;
         ESP_LOGW(TAG_NAME, "Disconnected from AP. Reason: %d", eventData->reason);
         if (eventData->reason == 15) xEventGroupSetBits(s_wifi_event_group, WIFI_WRONG_PASSWORD_BIT);
@@ -90,6 +97,7 @@ static void wifiStationEventHandler(void* arg, esp_event_base_t event_base, int3
         s_retry_num = 0;
         xEventGroupClearBits(s_wifi_event_group, WIFI_WRONG_PASSWORD_BIT);
         xEventGroupSetBits(s_wifi_event_group, WIFI_CONNECTED_BIT | WIFI_FINISHED);
+        sendWifiStatusToDisplay(true);
     }
 }
 

@@ -8,6 +8,7 @@
 boolean waitForDebugTask();
 void createAP(Wifi* wifi);
 void stopAP(Wifi* wifi);
+void apButtonInterrupt(void* arg);
 
 //=======================================================================
 //======================== Global variables =============================
@@ -24,13 +25,22 @@ Preferences savedSettings;
 void internetTask(void* params) {
     waitForDebugTask();
 
-    pinMode(AP_BUTTON, INPUT);
+    gpio_install_isr_service(0); // Select the ESP32 CPU core (0 or 1)
+    gpio_config_t ap_button_conf = {
+        .pin_bit_mask = 1ULL << AP_BUTTON,
+        .mode = GPIO_MODE_INPUT,
+        .pull_up_en = GPIO_PULLUP_ENABLE,
+        .intr_type = GPIO_INTR_NEGEDGE,
+    };
+    gpio_config(&ap_button_conf);
+
+    //  pinMode(AP_BUTTON, INPUT);
     uint8_t greenLed = GREEN_LED_PIN;
     uint8_t yellowLed = YELLOW_LED_PIN;
 
     pinMode(greenLed, OUTPUT);
     pinMode(yellowLed, OUTPUT);
-    boolean apButtonPressed = digitalRead(AP_BUTTON);
+    boolean apButtonPressed = gpio_get_level((gpio_num_t)AP_BUTTON);
     TaskHandle_t ledTask = NULL;
     savedSettings.begin("wifi", false);
 
@@ -47,8 +57,12 @@ void internetTask(void* params) {
     WifiSettings settings;
     EventBits_t mqttFlags;
 
+    DisplayMessage displayMessage;
+    displayMessage.updateType = INTERNET_UPDATE;
+
     mqttMessage mqttTransmitMessage;
 
+    // If the apButton is not pressed on restart, try to connect to the wifi. Otherwise the immediately create the AP.
     if (!apButtonPressed) {
         if (ledTask == NULL) {
             xTaskCreate(
@@ -74,10 +88,10 @@ void internetTask(void* params) {
     const char* base_path = "/data";
     ESP_ERROR_CHECK(mountHTMLStorage(base_path));
     ESP_ERROR_CHECK(startHTTPServer(base_path, &wifi));
+
     if (wifiState == DISCONNECTED) {
         createAP(&wifi);
-        /* Start the file server */
-
+        
         // for ever while loop to wait for new wifi settings, after successful connection, user must restart the device 
         while (1) {
             if (xQueueReceive(wifiSettingsQueue, &settings, 0) == pdTRUE) {
@@ -151,8 +165,8 @@ void internetTask(void* params) {
                     (void*)&ledParams,    /* Parameter passed into the task. */
                     tskIDLE_PRIORITY,/* Priority at which the task is created. */
                     &ledTask);      /* Used to pass out the created task's handle. */
-            }
-        }
+    }
+}
 
         else if (mqttFlags == MQTT_CONNECTED) {
             if (ledTask != NULL) {
@@ -221,4 +235,8 @@ void createAP(Wifi* wifi) {
 void stopAP(Wifi* wifi) {
     digitalWrite(YELLOW_LED_PIN, LOW);
     wifi->mode(WIFI_MODE_STA);
+}
+
+void apButtonInterrupt(void* arg) {
+    esp_restart();
 }
