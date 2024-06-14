@@ -5,10 +5,11 @@ static int s_retry_num = 0;
 /* FreeRTOS event group to signal when we are connected*/
 EventGroupHandle_t s_wifi_event_group;
 
-void sendWifiStatusToDisplay(boolean wifiConnected) {
+void sendWifiStatusToDisplay(boolean wifiConnected, InternetMode mode) {
     DisplayMessage displayMessage;
     displayMessage.updateType = INTERNET_UPDATE;
     displayMessage.internetConnection = wifiConnected;
+    displayMessage.internetMode = mode;
 
     xQueueSend(displayQueue, &displayMessage, 0);
 }
@@ -75,7 +76,7 @@ static void wifiStationEventHandler(void* arg, esp_event_base_t event_base, int3
     }
     else if (event_base == WIFI_EVENT &&
         event_id == WIFI_EVENT_STA_DISCONNECTED) {
-        sendWifiStatusToDisplay(false);
+        sendWifiStatusToDisplay(false, STATION);
         wifi_event_sta_disconnected_t* eventData = (wifi_event_sta_disconnected_t*)event_data;
         ESP_LOGW(TAG_NAME, "Disconnected from AP. Reason: %d", eventData->reason);
         if (eventData->reason == 15) xEventGroupSetBits(s_wifi_event_group, WIFI_WRONG_PASSWORD_BIT);
@@ -97,7 +98,7 @@ static void wifiStationEventHandler(void* arg, esp_event_base_t event_base, int3
         s_retry_num = 0;
         xEventGroupClearBits(s_wifi_event_group, WIFI_WRONG_PASSWORD_BIT);
         xEventGroupSetBits(s_wifi_event_group, WIFI_CONNECTED_BIT | WIFI_FINISHED);
-        sendWifiStatusToDisplay(true);
+        sendWifiStatusToDisplay(true, STATION);
     }
 }
 
@@ -185,6 +186,7 @@ void Wifi::mode(wifi_mode_t mode) {
             ESP_ERROR_CHECK(esp_wifi_set_config(WIFI_IF_AP, &wifi_config));
 
             ESP_LOGI(TAG_NAME, "Wifi access point started! SSID: %s password: %s\n\r", EXAMPLE_ESP_WIFI_SSID, EXAMPLE_ESP_WIFI_PASS);
+            sendWifiStatusToDisplay(true, AP_MODE);
         }
         else {
             esp_wifi_disconnect();

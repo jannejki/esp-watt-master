@@ -52,6 +52,16 @@ static unsigned char wifi_1_bits[] = {
    0x00, 0x01, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
    0x00, 0x00, 0x00 };
 
+#define ap_width 17
+#define ap_height 14
+static unsigned char ap_bits[] = {
+   0x00, 0x00, 0x00, 0x08, 0x20, 0x00, 0x0c, 0x60, 0x00, 0x66, 0xcc, 0x00,
+   0x36, 0xd8, 0x00, 0xb2, 0x9b, 0x00, 0x93, 0x93, 0x01, 0x93, 0x93, 0x01,
+   0x92, 0x93, 0x00, 0x36, 0xd8, 0x00, 0x66, 0xcc, 0x00, 0x0c, 0x60, 0x00,
+   0x0c, 0x60, 0x00, 0x00, 0x00, 0x00 };
+
+
+
 
 void welcomeScreen();
 void accessPointInfoScreen();
@@ -84,7 +94,7 @@ void displayTask(void* params) {
     DisplayMessage newDisplayMessage;
     bool displayRefresh = true;
     bool showCloud = true;
- //   welcomeScreen();
+    //   welcomeScreen();
 
     display.clearDisplay();
     RelaySettings relays[2];
@@ -121,21 +131,27 @@ void displayTask(void* params) {
                 display.setFont(u8g2_font_ncenB08_tr);
                 display.drawHLine(0, ScreenLayout::TOP_SECTION_HEIGHT, ScreenLayout::TOP_SECTION_WIDTH); // Draw top line
 
-                if (currentDisplayData.internetConnection) {
-                    display.drawXBM(85, 0, wifi_full_width, wifi_full_height, wifi_full_bits);
+                if (currentDisplayData.internetMode == STATION) {
+                    if (currentDisplayData.internetConnection) {
+                        display.drawXBM(85, 0, wifi_full_width, wifi_full_height, wifi_full_bits);
+                    }
+                    else {
+                        // Draw animated WiFi icon
+                        display.drawXBM(85, 0, wifi_full_width, wifi_full_height, wifiIcons[wifiIconFrame]);
+                    }
+
+                    // make this flash if no connection to mqtt
+                    if (currentDisplayData.mqttConnection) {
+                        display.drawXBM(105, 0, cloud_width, cloud_height, cloud);
+                    }
+                    else if (currentDisplayData.internetConnection && !currentDisplayData.mqttConnection && showCloud) {
+                        display.drawXBM(105, 0, cloud_width, cloud_height, cloud);
+                    }
                 }
-                else {
-                    // Draw animated WiFi icon
-                    display.drawXBM(85, 0, wifi_full_width, wifi_full_height, wifiIcons[wifiIconFrame]);
+                else if(currentDisplayData.internetMode == AP_MODE) {
+                    display.drawXBM(85, 0, ap_width, ap_height, ap_bits);
                 }
 
-                // make this flash if no connection to mqtt
-                if (currentDisplayData.mqttConnection) {
-                    display.drawXBM(105, 0, cloud_width, cloud_height, cloud);
-                }
-                else if (currentDisplayData.internetConnection && !currentDisplayData.mqttConnection && showCloud) {
-                    display.drawXBM(105, 0, cloud_width, cloud_height, cloud);
-                }
 
                 // Draw the relay statuses
                 display.setFont(u8g2_font_inr21_mf); // Set the font
