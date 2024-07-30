@@ -135,4 +135,66 @@ menu "SSL Certificate downloader"
         help 
             URL to download the SSL certificate from. For example, "http://pve.mosquitto/certificate".   
 endmenu
+
+menu "Pin configuration"
+    config WLAN_MODE_PIN
+        int "WLAN mode -pin"
+        default 1
+        help
+           Pin where "WLAN Mode button" is physically connected. Default 1.
+
+    config PREV_BTN_PIN
+        int "Previous button -pin"
+        default 11
+        help 
+            Pin where "Previous button" is physically connected. Default 11.
+
+    config SELECT_BTN_PIN
+        int "Select button -pin"
+        default 12
+        help 
+            Pin where "Select button" is physically connected. Default 12.
+            
+    config NEXT_BTN_PIN
+        int "Next button -pin"
+        default 13
+        help 
+            Pin where "Next button" is physically connected. Default 13.
+
+    config I2C_SCL_PIN
+        int "I2C SCL -pin"
+        default 15
+        help 
+            Pin where "I2C clock" -header is physically connected. Default 15.
+
+    config I2C_SDA_PIN
+        int "I2C SDA -pin"
+        default 16
+        help 
+            Pin where "I2C data" -header is physically connected. Default 16.
+
+    config RELAY_0_PIN
+        int "Relay 0 -pin"
+        default 19
+        help 
+            Pin where "Relay 0" is physically connected. Default 19.
+  
+    config RELAY_1_PIN
+        int "Relay 1 -pin"
+        default 8
+        help 
+            Pin where "Relay 1" is physically connected. Default 8.
+            
+    config RELAY_2_PIN
+        int "Relay 2 -pin"
+        default 18
+        help 
+            Pin where "Relay 2" is physically connected. Default 18.
+
+    config DEBUG_LED_PIN
+        int "Debug led -pin"
+        default 2
+        help 
+            Pin where "Debug led" is physically connected. Default 2.
+endmenu
 endmenu

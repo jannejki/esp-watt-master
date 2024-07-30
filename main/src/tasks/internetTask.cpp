@@ -1,5 +1,4 @@
 #include "tasks/internetTask.h"
-#define AP_BUTTON 6
 //=======================================================================
 //===================== Function definitions ============================
 //=======================================================================
@@ -22,14 +21,14 @@ void internetTask(void* params) {
 
     gpio_install_isr_service(0); // Select the ESP32 CPU core (0 or 1)
     gpio_config_t ap_button_conf = {
-        .pin_bit_mask = 1ULL << AP_BUTTON,
+        .pin_bit_mask = 1ULL << CONFIG_WLAN_MODE_PIN,
         .mode = GPIO_MODE_INPUT,
         .pull_up_en = GPIO_PULLUP_ENABLE,
         .intr_type = GPIO_INTR_NEGEDGE,
     };
     gpio_config(&ap_button_conf);
 
-    boolean apButtonPressed = gpio_get_level((gpio_num_t)AP_BUTTON);
+    boolean apButtonPressed = gpio_get_level((gpio_num_t)CONFIG_WLAN_MODE_PIN);
     savedSettings.begin("wifi", false);
 
     String ssid = savedSettings.getString(WIFI_SETTINGS_SSID_KEY);
@@ -50,6 +49,8 @@ void internetTask(void* params) {
     if (!apButtonPressed) {
         wifi.mode(WIFI_MODE_STA);
         wifiState = wifi.connectToWifi(ssid, password);
+    } else {
+        ESP_LOGI(TAG, "Manually starting WiFi Access point!");
     }
 
 
@@ -61,6 +62,7 @@ void internetTask(void* params) {
     ESP_ERROR_CHECK(startHTTPServer(base_path, &wifi));
 
     if (wifiState == DISCONNECTED) {
+        ESP_LOGI("internetTask", "Creating AP");
         createAP(&wifi);
 
         // for ever while loop to wait for new wifi settings, after successful connection, user must restart the device 

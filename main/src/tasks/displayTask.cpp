@@ -78,13 +78,11 @@ struct ScreenLayout {
     static const uint8_t BOTTOM_SECTION_WIDTH = 128;
 };
 
-int sda_pin = 16;
-int scl_pin = 15;
 
 /* Constructor */
-U8G2_SSD1306_128X64_NONAME_1_HW_I2C display(U8G2_R0, scl_pin, sda_pin);
+U8G2_SSD1306_128X64_NONAME_1_HW_I2C display(U8G2_R0, CONFIG_I2C_SCL_PIN, CONFIG_I2C_SDA_PIN);
 void displayTask(void* params) {
-    Wire.begin(sda_pin, scl_pin);   // Initialize the I2C bus
+    Wire.begin(CONFIG_I2C_SDA_PIN, CONFIG_I2C_SCL_PIN);   // Initialize the I2C bus
     initializeDisplay();
     DisplayMessage currentDisplayData = {
         .IPaddress = "Ei wifi-yhteyttä",
@@ -233,7 +231,7 @@ void displayTask(void* params) {
 
 void initializeDisplay() {
     Wire.end(); // End the I2C bus to prevent any issues
-    Wire.begin(sda_pin, scl_pin);   // Initialize the I2C bus
+    Wire.begin(CONFIG_I2C_SDA_PIN, CONFIG_I2C_SCL_PIN);   // Initialize the I2C bus
     display.begin();
     display.enableUTF8Print();
 }

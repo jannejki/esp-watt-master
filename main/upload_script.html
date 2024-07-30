@@ -407,22 +407,22 @@
             button.innerHTML = originalText;
         }
     }
-   
-       const scanAccessPoints = async () => {
-           let rsp;
-           let data = "Koti_655D:-30;Koti_4DD9:-40;DIRECT-4zM2020 Series:-50;HOSEN JAHANGIR:-60;DNA-WIFI-BFE5:-65;Sininen_muffini:-70;Koti_A204:-80;DNA-Mokkula-2G-N87QRR:-90;Koti_E6F5:-95;";
-   
-           try {
-               const accessPoints = parseAccessPointList(data);
-               createTable(accessPoints);
-           } catch (error) {
-   
-               alert("Jokin meni pieleen! " + error.status);
-           }
-       }
+    /*
+        const scanAccessPoints = async () => {
+            let rsp;
+            let data = "Koti_655D:-30;Koti_4DD9:-40;DIRECT-4zM2020 Series:-50;HOSEN JAHANGIR:-60;DNA-WIFI-BFE5:-65;Sininen_muffini:-70;Koti_A204:-80;DNA-Mokkula-2G-N87QRR:-90;Koti_E6F5:-95;";
     
+            try {
+                const accessPoints = parseAccessPointList(data);
+                createTable(accessPoints);
+            } catch (error) {
+    
+                alert("Jokin meni pieleen! " + error.status);
+            }
+        }
+     */
 
-/*
+
     const scanAccessPoints = async () => {
         let rsp;
         // let data = "Koti_655D:-30;Koti_4DD9:-40;DIRECT-4zM2020 Series:-50;HOSEN JAHANGIR:-60;DNA-WIFI-BFE5:-65;Sininen_muffini:-70;Koti_A204:-80;DNA-Mokkula-2G-N87QRR:-90;Koti_E6F5:-95;";
@@ -437,7 +437,7 @@
             alert("Jokin meni pieleen! " + error.status);
         }
     }
-*/
+
 
     const colorLerp = (color1, color2, percentage) => {
 

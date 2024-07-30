@@ -45,6 +45,7 @@ extern "C" void app_main() {
     esp_task_wdt_deinit();
     esp_log_level_set("*", ESP_LOG_INFO);
     // start tasks
+
     xTaskCreate(displayTask, "display task", 4096, NULL, 7, NULL);
     xTaskCreate(debugTask, "Debug task", 4096, NULL, 5, NULL);
     xTaskCreate(relayTask, "Relay task", 4096, NULL, 5, NULL);

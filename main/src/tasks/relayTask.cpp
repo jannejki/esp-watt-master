@@ -6,8 +6,8 @@ void sendUpdatedRelayToDisplay(Relay* relay);
 void relayTask(void* params) {
     Relay* relays = new Relay[(uint8_t)CONFIG_AMOUNT_OF_RELAYS];
 
-    relays[0].initialize(LED0, 0);
-    relays[1].initialize(LED1, 1);
+    relays[0].initialize(CONFIG_RELAY_0_PIN, 0);
+    relays[1].initialize(CONFIG_RELAY_1_PIN, 1);
 
     DebugMessage debugMessage;
     RelaySettings relaySettings;

@@ -9,11 +9,10 @@ void debug(DebugMessage* debugMessage);
 void debugTask(void* params) {
  
     Serial.begin(115200);
-
     DebugMessage debugMessage;
     String message;
 
-    CommandInterface commandInterface(LED1);
+    CommandInterface commandInterface(CONFIG_DEBUG_LED_PIN);
 
     EventBits_t uxBits;
 
