@@ -8,16 +8,23 @@ void relayTask(void* params) {
 
     relays[0].initialize(CONFIG_RELAY_0_PIN, 0);
     relays[1].initialize(CONFIG_RELAY_1_PIN, 1);
+    relays[2].initialize(CONFIG_RELAY_2_PIN, 2);
 
     DebugMessage debugMessage;
     RelaySettings relaySettings;
 
     double electricPrices[6] = { 0.0, 0.0, 0.0, 0.0, 0.0, 0.0 };
-    sendUpdatedRelayToDisplay(&relays[0]);
-    sendUpdatedRelayToDisplay(&relays[1]);
+    for (int i = 0; i < CONFIG_AMOUNT_OF_RELAYS; i++) {
+        sendUpdatedRelayToDisplay(&relays[i]);
+    }
 
     while (1) {
         if (xQueueReceive(relayQueue, &relaySettings, 0) == pdTRUE) {
+            if (relaySettings.relayNumber > CONFIG_AMOUNT_OF_RELAYS - 1) {
+                ESP_LOGI("Relay", "Invalid relay number! Relay number must be between 0-%d", CONFIG_AMOUNT_OF_RELAYS - 1);
+                continue;
+            }
+
             Relay::Mode mode = Relay::manual;
             bool state = false;
 

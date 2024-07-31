@@ -527,7 +527,7 @@ CONFIG_PARTITION_TABLE_MD5=y
 # Device information
 #
 CONFIG_DEVICE_ID="2e6c68e6-3fbc-42f9-8168-77bd8f584cb3"
-CONFIG_AMOUNT_OF_RELAYS=2
+CONFIG_AMOUNT_OF_RELAYS=3
 # end of Device information
 
 #

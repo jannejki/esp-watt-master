@@ -95,8 +95,8 @@ void displayTask(void* params) {
     //   welcomeScreen();
 
     display.clearDisplay();
-    RelaySettings relays[2];
-    bool relaysInitialized[2] = { false, false };
+    RelaySettings relays[CONFIG_AMOUNT_OF_RELAYS];
+    bool relaysInitialized[CONFIG_AMOUNT_OF_RELAYS] = {  };
 
     int wifiIconFrame = 0; // To keep track of the current WiFi icon frame
     const unsigned char* wifiIcons[] = { wifi_1_bits, wifi_2_bits, wifi_3_bits, wifi_full_bits };
@@ -114,6 +114,7 @@ void displayTask(void* params) {
             case RELAY_UPDATE:
                 relays[newDisplayMessage.relay.relayNumber] = newDisplayMessage.relay;
                 relaysInitialized[newDisplayMessage.relay.relayNumber] = true;
+                //  ESP_LOGI("Display", "relay %d initialized!", newDisplayMessage.relay.relayNumber);
                 break;
             case ALL_UPDATES:
                 break;
@@ -146,51 +147,79 @@ void displayTask(void* params) {
                         display.drawXBM(105, 0, cloud_width, cloud_height, cloud);
                     }
                 }
-                else if(currentDisplayData.internetMode == AP_MODE) {
+                else if (currentDisplayData.internetMode == AP_MODE) {
                     display.drawXBM(85, 0, ap_width, ap_height, ap_bits);
                 }
 
 
-                // Draw the relay statuses
-                display.setFont(u8g2_font_inr21_mf); // Set the font
+                // Set the font for the display
+                display.setFont(u8g2_font_inr21_mf);
+
+                // Drawing the first relay box
                 if (relaysInitialized[0]) {
+                    //  ESP_LOGI("display", "relay 0 mode: %s state: %s", relays[0].mode == automatic ? "auto" : "manual", relays[0].state == on ? "on" : "off");
                     if (relays[0].state == on) {
-                        display.drawRBox(17, 23, 37, 39, 4); // Draw the box for the relay statuses
+                        display.drawRBox(0, 23, 37, 39, 4); // Draw filled box
                         display.setDrawColor(0); // Set color to inverse
                         if (relays[0].mode == automatic)
-                            display.drawStr(17 + (37 - display.getStrWidth("A")) / 2, 33 + 23 - 3, "A");
+                            display.drawStr((37 - display.getStrWidth("A")) / 2, 33 + 23 - 3, "A");
                         else
-                            display.drawStr(17 + (37 - display.getStrWidth("M")) / 2, 33 + 23 - 3, "M");
+                            display.drawStr((37 - display.getStrWidth("M")) / 2, 33 + 23 - 3, "M");
                     }
                     else {
-                        display.drawRFrame(17, 23, 37, 39, 4); // Draw the box for the relay statuses
-                        display.setDrawColor(1); // Set color to inverse
+                        display.drawRFrame(0, 23, 37, 39, 4); // Draw frame
+                        display.setDrawColor(1); // Set color to normal
                         if (relays[0].mode == automatic)
-                            display.drawStr(17 + (37 - display.getStrWidth("A")) / 2, 33 + 23 - 3, "A");
+                            display.drawStr((37 - display.getStrWidth("A")) / 2, 33 + 23 - 3, "A");
                         else
-                            display.drawStr(17 + (37 - display.getStrWidth("M")) / 2, 33 + 23 - 3, "M");
+                            display.drawStr((37 - display.getStrWidth("M")) / 2, 33 + 23 - 3, "M");
                     }
                 }
 
                 // Reset draw color to default before drawing the second relay
                 display.setDrawColor(1);
-
+                //  ESP_LOGI("display", "relay 1 mode: %s state: %s", relays[1].mode == automatic ? "auto" : "manual", relays[1].state == on ? "on" : "off");
+                  // Drawing the second relay box
                 if (relaysInitialized[1]) {
                     if (relays[1].state == on) {
-                        display.drawRBox(73, 23, 37, 39, 4); // Draw the box for the relay statuses
+                        display.drawRBox(43, 23, 37, 39, 4); // Draw filled box
                         display.setDrawColor(0); // Set color to inverse
                         if (relays[1].mode == automatic)
-                            display.drawStr(73 + (37 - display.getStrWidth("A")) / 2, 33 + 23 - 3, "A");
+                            display.drawStr(43 + (37 - display.getStrWidth("A")) / 2, 33 + 23 - 3, "A");
                         else
-                            display.drawStr(73 + (37 - display.getStrWidth("M")) / 2, 33 + 23 - 3, "M");
+                            display.drawStr(43 + (37 - display.getStrWidth("M")) / 2, 33 + 23 - 3, "M");
                     }
                     else {
-                        display.drawRFrame(73, 23, 37, 39, 4); // Draw the box for the relay statuses
-                        display.setDrawColor(1); // Set color to inverse
+                        display.drawRFrame(43, 23, 37, 39, 4); // Draw frame
+                        display.setDrawColor(1); // Set color to normal
                         if (relays[1].mode == automatic)
-                            display.drawStr(73 + (37 - display.getStrWidth("A")) / 2, 33 + 23 - 3, "A");
+                            display.drawStr(43 + (37 - display.getStrWidth("A")) / 2, 33 + 23 - 3, "A");
                         else
-                            display.drawStr(73 + (37 - display.getStrWidth("M")) / 2, 33 + 23 - 3, "M");
+                            display.drawStr(43 + (37 - display.getStrWidth("M")) / 2, 33 + 23 - 3, "M");
+                    }
+                }
+
+                // Reset draw color to default before drawing the third relay
+                display.setDrawColor(1);
+
+                // Drawing the third relay box
+                if (relaysInitialized[2]) {
+                    //   ESP_LOGI("display", "relay 2 mode: %s state: %s", relays[2].mode == automatic ? "auto" : "manual", relays[2].state == on ? "on" : "off");
+                    if (relays[2].state == on) {
+                        display.drawRBox(86, 23, 37, 39, 4); // Draw filled box
+                        display.setDrawColor(0); // Set color to inverse
+                        if (relays[2].mode == automatic)
+                            display.drawStr(86 + (37 - display.getStrWidth("A")) / 2, 33 + 23 - 3, "A");
+                        else
+                            display.drawStr(86 + (37 - display.getStrWidth("M")) / 2, 33 + 23 - 3, "M");
+                    }
+                    else {
+                        display.drawRFrame(86, 23, 37, 39, 4); // Draw frame
+                        display.setDrawColor(1); // Set color to normal
+                        if (relays[2].mode == automatic)
+                            display.drawStr(86 + (37 - display.getStrWidth("A")) / 2, 33 + 23 - 3, "A");
+                        else
+                            display.drawStr(86 + (37 - display.getStrWidth("M")) / 2, 33 + 23 - 3, "M");
                     }
                 }
 

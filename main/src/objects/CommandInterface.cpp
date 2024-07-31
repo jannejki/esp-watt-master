@@ -115,7 +115,7 @@ void CommandInterface::populateCommandMap() {
     commandMap["relay"] = CommandFunction{
         "relay", [this](String input) { relayHandler(input); },
         "Read and control relays.",
-        "use 'relay [relay number] [on/off]' to toggle relays. use 'relay "
+        "use 'relay [relay number] [on/off/auto/manual]' to change relay settings. use 'relay "
         "[relay number]' to get relay's info." };
 
     commandMap["mqtt"] = CommandFunction{
@@ -163,7 +163,59 @@ void CommandInterface::simulateMQTTMessages(String input) {
 #endif
 }
 
-void CommandInterface::relayHandler(String input) {}
+void CommandInterface::relayHandler(String input) {
+    if (input.length() == 0) return;
+    std::vector<String> tokens = splitCommandsAndArgs(input);
+    
+    if (tokens.size() == 3) {
+        char* end;
+        long int relayNumber = strtol(tokens[1].c_str(), &end, 10);
+        if (*end != '\0') {
+            ESP_LOGI("relay handler", "%s is not a valid relay number", tokens[1].c_str());
+            return;
+        }
+
+        RelaySettings relaySettings;
+        relaySettings.relayNumber = relayNumber;
+
+        if (tokens[2].compareTo("on") == 0) {
+            relaySettings.state = on;
+        }
+        else if (tokens[2].compareTo("off") == 0) {
+            relaySettings.state = off;
+        }
+        else if (tokens[2].compareTo("auto") == 0) {
+            relaySettings.mode = automatic;
+        }
+        else if (tokens[2].compareTo("manual") == 0) {
+            relaySettings.mode = manual;
+        }
+        else {
+            ESP_LOGE("relay handler", "'%s' is not a valid setting!", tokens[2].c_str());
+        }
+
+
+        xQueueSend(relayQueue, &relaySettings, 100);
+    }
+
+    else if (tokens.size() == 2) {
+        char* end;
+        long int relayNumber = strtol(tokens[1].c_str(), &end, 10);
+        if (*end != '\0') {
+            ESP_LOGI("relay handler", "%s is not a valid relay number", tokens[1].c_str());
+            return;
+        }
+
+        // Sending a "no change" command to the relayqueue to get the relay log out it's state etc without changing anyting
+        RelaySettings relaySettings;
+        relaySettings.relayNumber = relayNumber;
+        relaySettings.mode = noModeChange;
+        relaySettings.state = noStateChange;
+        xQueueSend(relayQueue, &relaySettings, 100);
+
+    }
+
+}
 
 void CommandInterface::commandEntered(String input) {
     if (input.length() == 0) return;
