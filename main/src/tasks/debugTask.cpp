@@ -30,7 +30,7 @@ void debugTask(void* params) {
                 Serial.print('\n');
                 commandInterface.commandEntered((char*)message.c_str());
                 message = "";
-            } else if (c == 127) {
+            } else if (c == 8) {
                 message.remove(message.length() - 1);
             } else {
                 message += c;

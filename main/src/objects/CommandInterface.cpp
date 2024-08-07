@@ -141,7 +141,6 @@ void CommandInterface::restart(String input) {
 }
 
 void CommandInterface::simulateMQTTMessages(String input) {
-    mqttMessage mqtt;
 
     // Find the positions of the first and second spaces
     int firstSpace = input.indexOf(" ");
@@ -154,6 +153,7 @@ void CommandInterface::simulateMQTTMessages(String input) {
     // Extract the topic and message
     String topic = input.substring(firstSpace + 1, secondSpace);
 #if 0
+    mqttMessage mqtt;
     String message = input.substring(secondSpace + 1);
 
     mqtt.message = message;
@@ -166,7 +166,7 @@ void CommandInterface::simulateMQTTMessages(String input) {
 void CommandInterface::relayHandler(String input) {
     if (input.length() == 0) return;
     std::vector<String> tokens = splitCommandsAndArgs(input);
-    
+
     if (tokens.size() == 3) {
         char* end;
         long int relayNumber = strtol(tokens[1].c_str(), &end, 10);
@@ -177,6 +177,8 @@ void CommandInterface::relayHandler(String input) {
 
         RelaySettings relaySettings;
         relaySettings.relayNumber = relayNumber;
+        relaySettings.state = noStateChange;
+        relaySettings.mode = noModeChange;
 
         if (tokens[2].compareTo("on") == 0) {
             relaySettings.state = on;
